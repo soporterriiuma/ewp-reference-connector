@@ -43,6 +43,7 @@ public class GlobalProperties {
     String defaultAlgoriaCRLIST = baseUrl + "/ewp_learning_oportunities/";
     String defaultAlgoriaACURL = baseUrl + "/courses/";
     String defaultAlgoriaOmobilityLasUrl = "https://relacionesi-test2.uma.es/algoria" + "/ewp_omobilities_las/";
+    String defaultAlgoriaImobilityLasNotifyUrl = "https://relacionesi-test2.uma.es/algoria" + "/ewp_imobilities_las/";
     String defaultAlgoriaAuthorizationToken = "Token 6076263cedb35ca6c8abcfc6f872fb471130fdd7";
     //String defaultAlgoriaAuthorizationToken = "Token ab1a997c0f38eddbfb64c24b9e0162d366832f29";
     //String defaultAlgoriaAuthorizationToken = "Token aa38ee014e1ce693c30b399aab9668ebc13f21fd";
@@ -297,6 +298,14 @@ public class GlobalProperties {
             base = base + "/";
         }
         return base + heiId + "/" + mobilityId + "/";
+    }
+
+    public String getAlgoriaImobilityLasNotifyUrl(String heiId, String imobilityId) {
+        String base = getProperty("algoria.imobility.las.notify.url", defaultAlgoriaImobilityLasNotifyUrl);
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + heiId + "/" + imobilityId + "/notify/";
     }
             
     public int getAlgoriaTaskDelay() {

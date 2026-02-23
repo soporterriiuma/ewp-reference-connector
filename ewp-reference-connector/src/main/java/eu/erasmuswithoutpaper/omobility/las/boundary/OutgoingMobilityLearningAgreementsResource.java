@@ -383,6 +383,55 @@ public class OutgoingMobilityLearningAgreementsResource {
         return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
     }
 
+    @POST
+    @Path("cnr_test")
+    @Produces(MediaType.APPLICATION_XML)
+    public javax.ws.rs.core.Response omobilitiesLasCnrAlgoria(@FormParam("sending_hei_id") String sendingHeiId, @FormParam("omobility_id") List<String> omobilityIdList) {
+        if (sendingHeiId == null || sendingHeiId.trim().isEmpty()) {
+            throw new EwpWebApplicationException("Missing argumanets for get.", Response.Status.BAD_REQUEST);
+        }
+
+        if (omobilityIdList.size() > properties.getMaxOmobilitylasIds()) {
+            throw new EwpWebApplicationException("Max number of omobility learning agreements id's has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+        for (String omobilityId : omobilityIdList) {
+            notifyAlgoriaImobilityLas(sendingHeiId, omobilityId);
+        }
+
+
+        eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory factory = new eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory();
+
+        return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
+    }
+
+    private void notifyAlgoriaImobilityLas(String sendingHeiId, String imobilityId) {
+        String token = properties.getAlgoriaAuthotizationToken();
+        String url = properties.getAlgoriaImobilityLasNotifyUrl(sendingHeiId, imobilityId);
+            try {
+                Response algoriaResponse = ClientBuilder.newBuilder()
+                        .build()
+                        .target(url.trim())
+                        .request()
+                        .header("Authorization", token)
+                        .post(Entity.text(""));
+                try {
+                    String rawBody = algoriaResponse.readEntity(String.class);
+                    if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                        LOG.warning("Algoria notify failed. HTTP " + algoriaResponse.getStatus()
+                                + " URL=" + url + " body:\n" + rawBody);
+                    } else {
+                        LOG.fine("Algoria notify OK. HTTP " + algoriaResponse.getStatus()
+                                + " URL=" + url + " body:\n" + rawBody);
+                    }
+                } finally {
+                    algoriaResponse.close();
+                }
+            } catch (Exception e) {
+                LOG.warning("Algoria notify error for imobilityId=" + imobilityId + ": " + e.getMessage());
+            }
+    }
+
     private javax.ws.rs.core.Response omobilityStatsGet(String heiId) {
         LasOutgoingStatsResponse response = new LasOutgoingStatsResponse();
 
