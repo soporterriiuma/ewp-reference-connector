@@ -245,13 +245,15 @@ public class OmobilitiesLasAuxThread {
     private void notifyAlgoriaImobilityLas(String sendingHeiId, String imobilityId, String jsonBody) {
         String token = properties.getAlgoriaAuthotizationToken();
         String url = properties.getAlgoriaImobilityLasNotifyUrl(sendingHeiId, imobilityId);
+        String body = (jsonBody == null || jsonBody.trim().isEmpty()) ? "{}" : jsonBody;
         try {
             Response algoriaResponse = ClientBuilder.newBuilder()
                     .build()
                     .target(url.trim())
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", token)
-                    .post(Entity.json(jsonBody));
+                    .header("Content-Length", String.valueOf(body.getBytes(java.nio.charset.StandardCharsets.UTF_8).length))
+                    .post(Entity.entity(body, MediaType.APPLICATION_JSON_TYPE));
             try {
                 String rawBody = algoriaResponse.readEntity(String.class);
                 if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
