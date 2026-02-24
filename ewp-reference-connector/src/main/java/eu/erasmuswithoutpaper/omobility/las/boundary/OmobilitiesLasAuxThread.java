@@ -245,11 +245,7 @@ public class OmobilitiesLasAuxThread {
     private void notifyAlgoriaImobilityLas(String sendingHeiId, String imobilityId, String jsonBody) {
         String token = properties.getAlgoriaAuthotizationToken();
         String url = properties.getAlgoriaImobilityLasNotifyUrl(sendingHeiId, imobilityId);
-        LOG.info("Algoria notify (DRY RUN). URL: " + url);
-        LOG.info("Algoria notify (DRY RUN). Authorization: " + token);
-        LOG.info("Algoria notify (DRY RUN). JSON body:\n" + jsonBody);
-        // Actual send intentionally disabled for now.
-        /*try {
+        try {
             Response algoriaResponse = ClientBuilder.newBuilder()
                     .build()
                     .target(url.trim())
@@ -270,7 +266,7 @@ public class OmobilitiesLasAuxThread {
             }
         } catch (Exception e) {
             LOG.warning("Algoria notify error for imobilityId=" + imobilityId + ": " + e.getMessage());
-        }*/
+        }
     }
 
     private String toAlgoriaJson(LearningAgreement learningAgreement) {
