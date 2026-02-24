@@ -783,4 +783,62 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
 
         return Response.ok(omobilityLasUpdateRequest).build();
     }
+
+    @POST
+    @Path("send-cnr")
+    public Response cnr(@QueryParam("sending_hei_id") String sendingHeiId, @QueryParam("omobility_id") String id) {
+
+        LOG.fine("CNR: start");
+        if (sendingHeiId == null || sendingHeiId.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Missing sending_hei_id").build();
+        }
+        if (id == null || id.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Missing omobility_id").build();
+        }
+
+        Map<String, String> urls = registryClient.getOmobilityLaCnrHeiUrls(sendingHeiId);
+        if (urls == null || urls.isEmpty()) {
+            LOG.fine("CNR: No CNR URLs found for HEI " + sendingHeiId);
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        urls.forEach((key, value) -> LOG.fine("CNR: url: " + key + " -> " + value));
+
+        for (Map.Entry<String, String> entry : urls.entrySet()) {
+            ClientRequest clientRequest = new ClientRequest();
+            clientRequest.setUrl(entry.getValue());
+            clientRequest.setHeiId(sendingHeiId);
+            clientRequest.setMethod(HttpMethodEnum.POST);
+            clientRequest.setHttpsec(true);
+
+            Map<String, List<String>> paramsMap = new HashMap<>();
+            paramsMap.put("sending_hei_id", Collections.singletonList(sendingHeiId));
+            paramsMap.put("omobility_id", Collections.singletonList(id));
+            ParamsClass paramsClass = new ParamsClass();
+            paramsClass.setUnknownFields(paramsMap);
+            clientRequest.setParams(paramsClass);
+
+            LOG.info("CNR (DRY RUN): url=" + clientRequest.getUrl());
+            LOG.info("CNR (DRY RUN): heiId=" + clientRequest.getHeiId());
+            LOG.info("CNR (DRY RUN): method=" + clientRequest.getMethod());
+            LOG.info("CNR (DRY RUN): httpsec=" + clientRequest.isHttpsec());
+            LOG.info("CNR (DRY RUN): params=" + paramsMap);
+            // Actual send intentionally disabled for now.
+            /*ClientResponse cnrResponse = restClient.sendRequest(clientRequest, Empty.class);
+            LOG.fine("CNR: response: " + cnrResponse.getRawResponse());
+
+            try {
+                if (cnrResponse.getStatusCode() <= 599 && cnrResponse.getStatusCode() >= 400) {
+                    sendMonitoringService.sendMonitoring(clientRequest.getHeiId(), "ola-cnr", null, Integer.toString(cnrResponse.getStatusCode()), cnrResponse.getErrorMessage(), null);
+                } else if (cnrResponse.getStatusCode() != Response.Status.OK.getStatusCode()) {
+                    sendMonitoringService.sendMonitoring(clientRequest.getHeiId(), "ola-cnr", null, Integer.toString(cnrResponse.getStatusCode()), cnrResponse.getErrorMessage(), "Error");
+                }
+            } catch (Exception e) {
+                // swallow monitoring errors
+            }*/
+        }
+
+        return Response.ok(id).build();
+    }
+
 }

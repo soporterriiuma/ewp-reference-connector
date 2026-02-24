@@ -252,7 +252,6 @@ public class OmobilitiesLasAuxThread {
                     .target(url.trim())
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", token)
-                    .header("Content-Length", String.valueOf(body.getBytes(java.nio.charset.StandardCharsets.UTF_8).length))
                     .post(Entity.entity(body, MediaType.APPLICATION_JSON_TYPE));
             try {
                 String rawBody = algoriaResponse.readEntity(String.class);
