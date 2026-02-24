@@ -818,13 +818,7 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
             paramsClass.setUnknownFields(paramsMap);
             clientRequest.setParams(paramsClass);
 
-            LOG.info("CNR (DRY RUN): url=" + clientRequest.getUrl());
-            LOG.info("CNR (DRY RUN): heiId=" + clientRequest.getHeiId());
-            LOG.info("CNR (DRY RUN): method=" + clientRequest.getMethod());
-            LOG.info("CNR (DRY RUN): httpsec=" + clientRequest.isHttpsec());
-            LOG.info("CNR (DRY RUN): params=" + paramsMap);
-            // Actual send intentionally disabled for now.
-            /*ClientResponse cnrResponse = restClient.sendRequest(clientRequest, Empty.class);
+            ClientResponse cnrResponse = restClient.sendRequest(clientRequest, Empty.class);
             LOG.fine("CNR: response: " + cnrResponse.getRawResponse());
 
             try {
@@ -835,7 +829,7 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
                 }
             } catch (Exception e) {
                 // swallow monitoring errors
-            }*/
+            }
         }
 
         return Response.ok(id).build();
