@@ -357,13 +357,12 @@ public class OutgoingMobilityLearningAgreementsResource {
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
         long startMillis = System.currentTimeMillis();
         LOG.info("---- START /omobilities/las/test_stats ----");
-        logInboundRequestDetails();
 
         List<Institution> institutionList = learningAgreementEJB.getInternalInstitution();
         if (institutionList.size() != 1) {
             throw new IllegalStateException("Internal error: more than one insitution covered");
         }
-        String heiId = institutionList.get(0).getId();
+        String heiId = institutionList.get(0).getInstitutionId();
 
         String url = properties.getAlgoriaOmobilityLasUrl(heiId) + "stats/";
         String token = properties.getAlgoriaAuthotizationToken();
@@ -751,48 +750,6 @@ public class OutgoingMobilityLearningAgreementsResource {
             return new BigInteger(value.trim());
         } catch (NumberFormatException e) {
             return BigInteger.ZERO;
-        }
-    }
-
-    private void logInboundRequestDetails() {
-        try {
-            if (httpRequest == null) {
-                LOG.info("Inbound request is null.");
-                return;
-            }
-            LOG.info("Inbound method=" + httpRequest.getMethod());
-            LOG.info("Inbound uri=" + httpRequest.getRequestURI());
-            LOG.info("Inbound url=" + httpRequest.getRequestURL());
-            LOG.info("Inbound queryString=" + httpRequest.getQueryString());
-            LOG.info("Inbound remoteAddr=" + httpRequest.getRemoteAddr());
-            LOG.info("Inbound remoteHost=" + httpRequest.getRemoteHost());
-            LOG.info("Inbound remotePort=" + httpRequest.getRemotePort());
-            LOG.info("Inbound scheme=" + httpRequest.getScheme());
-            LOG.info("Inbound protocol=" + httpRequest.getProtocol());
-            LOG.info("Inbound contextPath=" + httpRequest.getContextPath());
-            LOG.info("Inbound servletPath=" + httpRequest.getServletPath());
-            LOG.info("Inbound pathInfo=" + httpRequest.getPathInfo());
-            LOG.info("Inbound authType=" + httpRequest.getAuthType());
-
-            Enumeration<String> headerNames = httpRequest.getHeaderNames();
-            while (headerNames != null && headerNames.hasMoreElements()) {
-                String headerName = headerNames.nextElement();
-                Enumeration<String> values = httpRequest.getHeaders(headerName);
-                List<String> valueList = new ArrayList<>();
-                while (values != null && values.hasMoreElements()) {
-                    valueList.add(values.nextElement());
-                }
-                LOG.info("Inbound header " + headerName + "=" + valueList);
-            }
-
-            Map<String, String[]> parameterMap = httpRequest.getParameterMap();
-            if (parameterMap != null) {
-                for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-                    LOG.info("Inbound param " + entry.getKey() + "=" + Arrays.toString(entry.getValue()));
-                }
-            }
-        } catch (Exception ex) {
-            LOG.warning("Failed to log inbound request details: " + ex.getMessage());
         }
     }
 
