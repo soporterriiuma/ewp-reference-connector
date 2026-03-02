@@ -1764,7 +1764,6 @@ public class GuiIiaResource {
 
                 if (!approvals.contains(partnerHeiId) && approval.getIiaHash().equals(iia.getHashPartner())) {
                     LOG.fine("get-partner-approvals: Approval not found for partner: " + partnerHeiId);
-                    execNotificationToAlgoriaApprove(iiaId, partnerHeiId);
                     IiaApproval iiaApproval = new IiaApproval();
                     iiaApproval.setHeiId(partnerHeiId);
                     iiaApproval.setIia(iia);
@@ -1773,6 +1772,9 @@ public class GuiIiaResource {
                     iiasEJB.insertIiaApproval(iiaApproval);
                     LOG.fine("get-partner-approvals: Approval inserted for partner: " + partnerHeiId);
                 }
+
+                //send to algoria
+                execNotificationToAlgoriaApprove(iiaId, partnerHeiId);
             }
         }
 
