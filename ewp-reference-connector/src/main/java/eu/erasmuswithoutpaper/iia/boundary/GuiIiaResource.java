@@ -997,10 +997,11 @@ public class GuiIiaResource {
             }
         }
 
-        LOG.fine("iias-approve-test: IIA found, checking hash match");
-
-        if (!hashSitEquals(heiId, partnerId, iiaId, theIia.getHashPartner())) {
-            return javax.ws.rs.core.Response.status(418).entity("Los acuerdos no coinciden").build();
+        LOG.fine("iias-approve: IIA found, retrieving current partner hash");
+        IiasGetResponse.Iia remoteIia = sendGet(heiId, partnerId);
+        if (remoteIia == null || remoteIia.getIiaHash() == null || remoteIia.getIiaHash().isEmpty()) {
+            return javax.ws.rs.core.Response.status(Response.Status.BAD_GATEWAY)
+                    .entity("No se pudo obtener el hash actual del partner").build();
         }
 
         LOG.fine("Iia found: " + theIia.getId());
@@ -1010,7 +1011,7 @@ public class GuiIiaResource {
         approval.setIia(theIia);
         approval.setHeiId(localHeiId);
         approval.setConditionsHash(theIia.getConditionsHash());
-        approval.setConditionsHashPartner(theIia.getHashPartner());
+        approval.setConditionsHashPartner(remoteIia.getIiaHash());
 
         iiasEJB.insertIiaApproval(approval);
 
@@ -1508,29 +1509,6 @@ public class GuiIiaResource {
 
         //Put the task in the queue
         IiaTaskService.addTask(callableTask);
-    }
-
-    private boolean hashSitEquals(String heiId, String partnerId, String ourId, String hash) {
-        LOG.fine("GuiIiaRecource: Starting hash comparison for IIA " + ourId + " with partner " + partnerId);
-        LOG.fine("GuiIiaRecource: Partner hash: " + (hash == null ? "null" : hash));
-        IiasGetResponse.Iia remoteIia = sendGet(heiId, partnerId);
-
-        if (hash == null || hash.isEmpty()) {
-            LOG.fine("GuiIiaRecource: Partner hash is empty, retrieving it from remote IIA");
-            hash = cheackAndUpdatetePartnerHash(ourId, remoteIia);
-        }
-
-        LOG.fine("GuiIiaRecource: Remote IIA hash: " + remoteIia.getIiaHash());
-
-        return hash.equals(remoteIia.getIiaHash());
-    }
-
-    private String cheackAndUpdatetePartnerHash(String iiaId, IiasGetResponse.Iia remoteIia) {
-        Iia iiaLocal = iiasEJB.findById(iiaId);
-        LOG.fine("GuiIiaRecource: Partner hash is empty for IIA " + iiaLocal.getId() + ", updating it with value: " + remoteIia.getIiaHash());
-        iiasEJB.updateHashPartner(iiaLocal.getId(), remoteIia.getIiaHash());
-
-        return remoteIia.getIiaHash();
     }
 
     private IiasGetResponse.Iia sendGet(String heiId, String iiaId) {

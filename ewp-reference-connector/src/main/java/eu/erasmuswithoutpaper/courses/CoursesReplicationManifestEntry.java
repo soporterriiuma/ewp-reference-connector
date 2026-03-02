@@ -15,7 +15,7 @@ import eu.erasmuswithoutpaper.common.control.GlobalProperties;
 import javax.inject.Inject;
 import java.math.BigInteger;
 
-@PublicAPI
+//@PublicAPI
 public class CoursesReplicationManifestEntry implements ManifestEntryStrategy {
     @Inject
     GlobalProperties globalProperties;
@@ -23,13 +23,13 @@ public class CoursesReplicationManifestEntry implements ManifestEntryStrategy {
     @Override
     public ManifestApiEntryBase getManifestEntry(String baseUri) {
         SimpleCourseReplication replication = new SimpleCourseReplication();
-        replication.setVersion(EwpConstants.COURSE_REPLICATION_VERSION);
+        /*replication.setVersion(EwpConstants.COURSE_REPLICATION_VERSION);
         replication.setUrl(baseUri + "courses/replication");
         replication.setSupportsModifiedSince(true);
 
         HttpSecurityOptions httpSecurityOptions = new HttpSecurityOptions();
         
-        HttpSecurityOptions.ClientAuthMethods clientAuthMethods = new HttpSecurityOptions.ClientAuthMethods();
+        HttpSecurityOptions.ClientAuthMethods clientAuthMethods = new HttpSecurityOptions.ClientAuthMethods();*/
         
         /*CliauthTlscert cliauthtlscert = new CliauthTlscert();
         cliauthtlscert.setAllowsSelfSigned(false);
@@ -37,7 +37,7 @@ public class CoursesReplicationManifestEntry implements ManifestEntryStrategy {
         
 //        clientAuthMethods.getAny().add(new Anonymous());
         
-        clientAuthMethods.getAny().add(new CliauthHttpsig());
+        /*clientAuthMethods.getAny().add(new CliauthHttpsig());
         
         httpSecurityOptions.setClientAuthMethods(clientAuthMethods);
         
@@ -49,7 +49,7 @@ public class CoursesReplicationManifestEntry implements ManifestEntryStrategy {
         httpSecurityOptions.setServerAuthMethods(serverAuthMethods);
         replication.setHttpSecurity(httpSecurityOptions);
         
-       // iias.setSendsNotifications(new Empty());
+       // iias.setSendsNotifications(new Empty());*/
         return replication;
     }
 }
