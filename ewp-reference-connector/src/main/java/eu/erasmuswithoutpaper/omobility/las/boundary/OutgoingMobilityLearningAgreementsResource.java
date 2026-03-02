@@ -351,6 +351,57 @@ public class OutgoingMobilityLearningAgreementsResource {
         return omobilityStatsGet(heiId);
     }
 
+    @GET
+    @Path("test_stats")
+    @Produces(MediaType.APPLICATION_XML)
+    public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
+        List<Institution> institutionList = learningAgreementEJB.getInternalInstitution();
+        if (institutionList.size() != 1) {
+            throw new IllegalStateException("Internal error: more than one insitution covered");
+        }
+        String heiId = institutionList.get(0).getId();
+
+        String url = properties.getAlgoriaOmobilityLasUrl(heiId) + "stats/";
+        String token = properties.getAlgoriaAuthotizationToken();
+
+        Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                throw new EwpWebApplicationException("Stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(rawBody);
+            JsonNode statsNode = firstExistingField(root, "academicYearLaStats", "academic_year_la_stats", "academic-year-la-stats");
+
+            LasOutgoingStatsResponse response = new LasOutgoingStatsResponse();
+            if (statsNode != null && statsNode.isArray()) {
+                for (JsonNode statNode : statsNode) {
+                    LasOutgoingStatsResponse.AcademicYearLaStats stat = new LasOutgoingStatsResponse.AcademicYearLaStats();
+                    stat.setReceivingAcademicYearId(readStringField(statNode, "receivingAcademicYearId", "receiving_academic_year_id", "receiving-academic-year-id"));
+                    stat.setLaOutgoingTotal(readBigIntegerField(statNode, "laOutgoingTotal", "la_outgoing_total", "la-outgoing-total"));
+                    stat.setLaOutgoingNotModifiedAfterApproval(readBigIntegerField(statNode, "laOutgoingNotModifiedAfterApproval", "la_outgoing_not_modified_after_approval", "la-outgoing-not-modified-after-approval"));
+                    stat.setLaOutgoingModifiedAfterApproval(readBigIntegerField(statNode, "laOutgoingModifiedAfterApproval", "la_outgoing_modified_after_approval", "la-outgoing-modified-after-approval"));
+                    stat.setLaOutgoingLatestVersionApproved(readBigIntegerField(statNode, "laOutgoingLatestVersionApproved", "la_outgoing_latest_version_approved", "la-outgoing-latest-version-approved"));
+                    stat.setLaOutgoingLatestVersionRejected(readBigIntegerField(statNode, "laOutgoingLatestVersionRejected", "la_outgoing_latest_version_rejected", "la-outgoing-latest-version-rejected"));
+                    stat.setLaOutgoingLatestVersionAwaiting(readBigIntegerField(statNode, "laOutgoingLatestVersionAwaiting", "la_outgoing_latest_version_awaiting", "la-outgoing-latest-version-awaiting"));
+                    response.getAcademicYearLaStats().add(stat);
+                }
+            }
+
+            return javax.ws.rs.core.Response.ok(response).build();
+        } catch (EwpWebApplicationException e) {
+            throw e;
+        } catch (Exception e) {
+            LOG.warning("Algoria stats response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria stats parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("Stats request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
+        }
+    }
+
     @POST
     @Path("cnr")
     @Produces(MediaType.APPLICATION_XML)
@@ -646,6 +697,47 @@ public class OutgoingMobilityLearningAgreementsResource {
     private void stripTimezone(XMLGregorianCalendar cal) {
         if (cal != null) {
             cal.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+        }
+    }
+
+    private JsonNode firstExistingField(JsonNode parent, String... names) {
+        if (parent == null || names == null) {
+            return null;
+        }
+        for (String name : names) {
+            JsonNode value = parent.get(name);
+            if (value != null && !value.isNull()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private String readStringField(JsonNode parent, String... names) {
+        JsonNode node = firstExistingField(parent, names);
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        String value = node.asText(null);
+        return value == null || value.trim().isEmpty() ? null : value;
+    }
+
+    private BigInteger readBigIntegerField(JsonNode parent, String... names) {
+        JsonNode node = firstExistingField(parent, names);
+        if (node == null || node.isNull()) {
+            return BigInteger.ZERO;
+        }
+        if (node.isIntegralNumber()) {
+            return node.bigIntegerValue();
+        }
+        String value = node.asText(null);
+        if (value == null || value.trim().isEmpty()) {
+            return BigInteger.ZERO;
+        }
+        try {
+            return new BigInteger(value.trim());
+        } catch (NumberFormatException e) {
+            return BigInteger.ZERO;
         }
     }
 
