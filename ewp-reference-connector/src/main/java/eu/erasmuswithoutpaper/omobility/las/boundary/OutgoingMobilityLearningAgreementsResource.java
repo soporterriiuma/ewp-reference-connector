@@ -355,6 +355,10 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Path("test_stats")
     @Produces(MediaType.APPLICATION_XML)
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
+        long startMillis = System.currentTimeMillis();
+        LOG.info("---- START /omobilities/las/test_stats ----");
+        logInboundRequestDetails();
+
         List<Institution> institutionList = learningAgreementEJB.getInternalInstitution();
         if (institutionList.size() != 1) {
             throw new IllegalStateException("Internal error: more than one insitution covered");
@@ -363,10 +367,17 @@ public class OutgoingMobilityLearningAgreementsResource {
 
         String url = properties.getAlgoriaOmobilityLasUrl(heiId) + "stats/";
         String token = properties.getAlgoriaAuthotizationToken();
+        LOG.info("Algoria stats outbound method=GET");
+        LOG.info("Algoria stats outbound url=" + url);
+        LOG.info("Algoria stats outbound header Authorization=" + token);
+        LOG.info("Algoria stats resolved heiId=" + heiId);
 
         Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
+            LOG.info("Algoria stats response status=" + algoriaResponse.getStatus());
+            LOG.info("Algoria stats response headers=" + algoriaResponse.getStringHeaders());
+            LOG.info("Algoria stats raw body:\n" + rawBody);
             if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
                 throw new EwpWebApplicationException("Stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
             }
@@ -392,6 +403,7 @@ public class OutgoingMobilityLearningAgreementsResource {
 
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
+            LOG.warning("Algoria stats failed with known error: " + e.getMessage());
             throw e;
         } catch (Exception e) {
             LOG.warning("Algoria stats response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
@@ -399,6 +411,7 @@ public class OutgoingMobilityLearningAgreementsResource {
             throw new EwpWebApplicationException("Stats request failed", Response.Status.BAD_GATEWAY);
         } finally {
             algoriaResponse.close();
+            LOG.info("---- END /omobilities/las/test_stats (" + (System.currentTimeMillis() - startMillis) + "ms) ----");
         }
     }
 
@@ -738,6 +751,48 @@ public class OutgoingMobilityLearningAgreementsResource {
             return new BigInteger(value.trim());
         } catch (NumberFormatException e) {
             return BigInteger.ZERO;
+        }
+    }
+
+    private void logInboundRequestDetails() {
+        try {
+            if (httpRequest == null) {
+                LOG.info("Inbound request is null.");
+                return;
+            }
+            LOG.info("Inbound method=" + httpRequest.getMethod());
+            LOG.info("Inbound uri=" + httpRequest.getRequestURI());
+            LOG.info("Inbound url=" + httpRequest.getRequestURL());
+            LOG.info("Inbound queryString=" + httpRequest.getQueryString());
+            LOG.info("Inbound remoteAddr=" + httpRequest.getRemoteAddr());
+            LOG.info("Inbound remoteHost=" + httpRequest.getRemoteHost());
+            LOG.info("Inbound remotePort=" + httpRequest.getRemotePort());
+            LOG.info("Inbound scheme=" + httpRequest.getScheme());
+            LOG.info("Inbound protocol=" + httpRequest.getProtocol());
+            LOG.info("Inbound contextPath=" + httpRequest.getContextPath());
+            LOG.info("Inbound servletPath=" + httpRequest.getServletPath());
+            LOG.info("Inbound pathInfo=" + httpRequest.getPathInfo());
+            LOG.info("Inbound authType=" + httpRequest.getAuthType());
+
+            Enumeration<String> headerNames = httpRequest.getHeaderNames();
+            while (headerNames != null && headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                Enumeration<String> values = httpRequest.getHeaders(headerName);
+                List<String> valueList = new ArrayList<>();
+                while (values != null && values.hasMoreElements()) {
+                    valueList.add(values.nextElement());
+                }
+                LOG.info("Inbound header " + headerName + "=" + valueList);
+            }
+
+            Map<String, String[]> parameterMap = httpRequest.getParameterMap();
+            if (parameterMap != null) {
+                for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+                    LOG.info("Inbound param " + entry.getKey() + "=" + Arrays.toString(entry.getValue()));
+                }
+            }
+        } catch (Exception ex) {
+            LOG.warning("Failed to log inbound request details: " + ex.getMessage());
         }
     }
 
