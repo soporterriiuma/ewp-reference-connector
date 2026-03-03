@@ -267,11 +267,7 @@ public class GlobalProperties {
     }
     
     public String getAlgoriaAuthotizationToken() {
-        try {
-            return configEJB.getValue("algoria.tokens.authorization", defaultAlgoriaAuthorizationToken);
-        } catch (Exception e) {
-            return defaultAlgoriaAuthorizationToken;
-        }
+        return defaultAlgoriaAuthorizationToken;
     }
 
     public String getAlgoriaOmobilityLasUrl(String heiId) {
