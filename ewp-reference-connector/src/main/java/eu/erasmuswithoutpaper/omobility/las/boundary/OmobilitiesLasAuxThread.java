@@ -18,7 +18,6 @@ import eu.erasmuswithoutpaper.omobility.las.entity.*;
 import javax.ejb.EJB;
 import javax.inject.Inject;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -144,81 +143,8 @@ public class OmobilitiesLasAuxThread {
     }
 
     public void createLasAlgoria(String heiId, String omobilityId) throws Exception {
-        LOG.fine("OmobilitiesLasAuxThread: Start auxiliary thread to create LAS for mobility " + omobilityId);
-
-        Map<String, String> map = registryClient.getOmobilityLasHeiUrls(heiId);
-        LOG.fine("OmobilitiesLasAuxThread: map: " + (map == null ? "null" : map.toString()));
-        if (map == null || map.isEmpty()) {
-            LOG.fine("OmobilitiesLasAuxThread: No LAS URLs found for HEI " + heiId);
-            return;
-        }
-
-        String url = map.get("get-url");
-
-        ClientRequest clientRequest = new ClientRequest();
-        clientRequest.setUrl(url);
-        clientRequest.setHeiId(heiId);
-        clientRequest.setMethod(HttpMethodEnum.POST);
-        clientRequest.setHttpsec(true);
-
-        LOG.fine("OmobilitiesLasAuxThread: url: " + url);
-
-        Map<String, List<String>> paramsMap = new HashMap<>();
-        paramsMap.put("sending_hei_id", Collections.singletonList(heiId));
-        paramsMap.put("omobility_id", Collections.singletonList(omobilityId));
-        ParamsClass paramsClass = new ParamsClass();
-        paramsClass.setUnknownFields(paramsMap);
-        clientRequest.setParams(paramsClass);
-
-        LOG.fine("OmobilitiesLasAuxThread: params: " + paramsMap.toString());
-
-        ClientResponse omobilityLasGetResponse = restClient.sendRequest(clientRequest, OmobilityLasGetResponse.class);
-
-        LOG.fine("NOTIFY: response: " + omobilityLasGetResponse.getRawResponse());
-
-        if (omobilityLasGetResponse.getStatusCode() != Response.Status.OK.getStatusCode()) {
-            if (omobilityLasGetResponse.getStatusCode() <= 599 && omobilityLasGetResponse.getStatusCode() >= 400) {
-                sendMonitoringService.sendMonitoring(clientRequest.getHeiId(), "omobility-las", "get", Integer.toString(omobilityLasGetResponse.getStatusCode()), omobilityLasGetResponse.getErrorMessage(), null);
-            } else if (omobilityLasGetResponse.getStatusCode() != Response.Status.OK.getStatusCode()) {
-                sendMonitoringService.sendMonitoring(clientRequest.getHeiId(), "omobility-las", "get", Integer.toString(omobilityLasGetResponse.getStatusCode()), omobilityLasGetResponse.getErrorMessage(), "Error");
-            }
-            return;
-        }
-
-        OmobilityLasGetResponse response = (OmobilityLasGetResponse) omobilityLasGetResponse.getResult();
-
-        if (response == null) {
-            LOG.fine("OmobilitiesLasAuxThread: response is null");
-            return;
-        }
-
-        if (response.getLa() == null) {
-            LOG.fine("OmobilitiesLasAuxThread: response.getLa() is null");
-            return;
-        }
-
-        if (response.getLa().isEmpty()) {
-            LOG.fine("OmobilitiesLasAuxThread: response.getLa() is empty");
-            return;
-        }
-
-        LOG.fine("OmobilitiesLasAuxThread: response: " + response.toString());
-
-        LearningAgreement learningAgreement = response.getLa().get(0);
-
-        LOG.fine("OmobilitiesLasAuxThread: learningAgreement: " + learningAgreement.toString());
-
-        //Send LA to Algoria
-        String json = toAlgoriaJson(learningAgreement);
-        if (json != null && !json.trim().isEmpty()) {
-            notifyAlgoriaImobilityLas(heiId, omobilityId, json);
-        } else {
-            LOG.warning("OmobilitiesLasAuxThread: Algoria notify skipped, empty JSON for omobility " + omobilityId);
-        }
-
-
-        LOG.fine("OmobilitiesLasAuxThread: End auxiliary thread to create LAS for mobility " + omobilityId);
-
+        LOG.fine("OmobilitiesLasAuxThread: Start auxiliary thread to create LAS for mobility " + omobilityId + " and notify Algoria");
+        notifyAlgoriaImobilityLas(heiId, omobilityId);
     }
 
 
@@ -242,17 +168,16 @@ public class OmobilitiesLasAuxThread {
         LOG.fine("OmobilitiesLasAuxThread: OlearningAgreement updated");
     }
 
-    private void notifyAlgoriaImobilityLas(String sendingHeiId, String imobilityId, String jsonBody) {
+    private void notifyAlgoriaImobilityLas(String sendingHeiId, String imobilityId) {
         String token = properties.getAlgoriaAuthotizationToken();
         String url = properties.getAlgoriaImobilityLasNotifyUrl(sendingHeiId, imobilityId);
-        String body = (jsonBody == null || jsonBody.trim().isEmpty()) ? "{}" : jsonBody;
         try {
             Response algoriaResponse = ClientBuilder.newBuilder()
                     .build()
                     .target(url.trim())
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", token)
-                    .post(Entity.entity(body, MediaType.APPLICATION_JSON_TYPE));
+                    .method("POST");
             try {
                 String rawBody = algoriaResponse.readEntity(String.class);
                 if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
