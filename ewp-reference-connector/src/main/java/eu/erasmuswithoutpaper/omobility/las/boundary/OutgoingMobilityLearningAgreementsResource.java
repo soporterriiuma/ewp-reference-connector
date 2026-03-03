@@ -138,7 +138,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     }
 
     @GET
-    @Path("get_test")
+    @Path("test_get")
     @Produces(MediaType.APPLICATION_XML)
     public javax.ws.rs.core.Response omobilityGetGetTest(@QueryParam("sending_hei_id") List<String> sendingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
         return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
