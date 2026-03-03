@@ -1774,6 +1774,7 @@ public class GuiIiaResource {
                 }
 
                 //send to algoria
+                LOG.fine("get-partner-approvals: Sending notification to Algoria for approval of partner: " + partnerHeiId);
                 execNotificationToAlgoriaApprove(iiaId, partnerHeiId);
             }
         }

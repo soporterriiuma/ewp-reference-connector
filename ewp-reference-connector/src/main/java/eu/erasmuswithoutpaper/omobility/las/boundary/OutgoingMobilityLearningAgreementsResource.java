@@ -355,7 +355,6 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Path("test_stats")
     @Produces(MediaType.APPLICATION_XML)
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
-        long startMillis = System.currentTimeMillis();
         LOG.info("---- START /omobilities/las/test_stats ----");
 
         List<Institution> institutionList = learningAgreementEJB.getInternalInstitution();
@@ -410,7 +409,6 @@ public class OutgoingMobilityLearningAgreementsResource {
             throw new EwpWebApplicationException("Stats request failed", Response.Status.BAD_GATEWAY);
         } finally {
             algoriaResponse.close();
-            LOG.info("---- END /omobilities/las/test_stats (" + (System.currentTimeMillis() - startMillis) + "ms) ----");
         }
     }
 
