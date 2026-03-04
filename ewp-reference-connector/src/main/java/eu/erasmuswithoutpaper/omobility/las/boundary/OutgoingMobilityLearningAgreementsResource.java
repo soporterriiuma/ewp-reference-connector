@@ -382,7 +382,14 @@ public class OutgoingMobilityLearningAgreementsResource {
 
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            LasOutgoingStatsResponse response = mapper.readValue(rawBody, LasOutgoingStatsResponse.class);
+
+            JsonNode root = mapper.readTree(rawBody);
+            JsonNode statsNode = root.get("academicYearLaStats");
+            if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
+                ((ObjectNode) root).set("academicYearLaStats", statsNode.get(0));
+            }
+
+            LasOutgoingStatsResponse response = mapper.convertValue(root, LasOutgoingStatsResponse.class);
             LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
