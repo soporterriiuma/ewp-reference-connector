@@ -412,7 +412,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         }
     }
 
-    @POST
+    /*@POST
     @Path("cnr")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
@@ -442,11 +442,12 @@ public class OutgoingMobilityLearningAgreementsResource {
         eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory factory = new eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory();
 
         return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
-    }
+    }*/
 
     @POST
-    @Path("cnr_test")
+    @Path("cnr")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilitiesLasCnrAlgoria(@FormParam("sending_hei_id") String sendingHeiId, @FormParam("omobility_id") List<String> omobilityIdList) {
         if (sendingHeiId == null || sendingHeiId.trim().isEmpty()) {
             throw new EwpWebApplicationException("Missing argumanets for get.", Response.Status.BAD_REQUEST);
