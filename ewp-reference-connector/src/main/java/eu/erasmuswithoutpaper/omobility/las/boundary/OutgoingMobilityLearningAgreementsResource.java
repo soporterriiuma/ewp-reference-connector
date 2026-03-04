@@ -381,24 +381,9 @@ public class OutgoingMobilityLearningAgreementsResource {
             }
 
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(rawBody);
-            JsonNode statsNode = firstExistingField(root, "academicYearLaStats", "academic_year_la_stats", "academic-year-la-stats");
-
-            LasOutgoingStatsResponse response = new LasOutgoingStatsResponse();
-            if (statsNode != null && statsNode.isArray()) {
-                for (JsonNode statNode : statsNode) {
-                    LasOutgoingStatsResponse.AcademicYearLaStats stat = new LasOutgoingStatsResponse.AcademicYearLaStats();
-                    stat.setReceivingAcademicYearId(readStringField(statNode, "receivingAcademicYearId", "receiving_academic_year_id", "receiving-academic-year-id"));
-                    stat.setLaOutgoingTotal(readBigIntegerField(statNode, "laOutgoingTotal", "la_outgoing_total", "la-outgoing-total"));
-                    stat.setLaOutgoingNotModifiedAfterApproval(readBigIntegerField(statNode, "laOutgoingNotModifiedAfterApproval", "la_outgoing_not_modified_after_approval", "la-outgoing-not-modified-after-approval"));
-                    stat.setLaOutgoingModifiedAfterApproval(readBigIntegerField(statNode, "laOutgoingModifiedAfterApproval", "la_outgoing_modified_after_approval", "la-outgoing-modified-after-approval"));
-                    stat.setLaOutgoingLatestVersionApproved(readBigIntegerField(statNode, "laOutgoingLatestVersionApproved", "la_outgoing_latest_version_approved", "la-outgoing-latest-version-approved"));
-                    stat.setLaOutgoingLatestVersionRejected(readBigIntegerField(statNode, "laOutgoingLatestVersionRejected", "la_outgoing_latest_version_rejected", "la-outgoing-latest-version-rejected"));
-                    stat.setLaOutgoingLatestVersionAwaiting(readBigIntegerField(statNode, "laOutgoingLatestVersionAwaiting", "la_outgoing_latest_version_awaiting", "la-outgoing-latest-version-awaiting"));
-                    response.getAcademicYearLaStats().add(stat);
-                }
-            }
-
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            LasOutgoingStatsResponse response = mapper.readValue(rawBody, LasOutgoingStatsResponse.class);
+            LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
             LOG.warning("Algoria stats failed with known error: " + e.getMessage());
