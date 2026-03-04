@@ -161,7 +161,7 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
     @POST
     @Path("update/approve")
     @Consumes(MediaType.APPLICATION_XML)
-    public Response updateAccept(@QueryParam("id") String id, OmobilityLasUpdateRequestDto omobilityLasUpdateRequestDto) throws Exception {
+    public Response updateAccept(OmobilityLasUpdateRequestDto omobilityLasUpdateRequestDto) throws Exception {
         /*if (omobilityLasUpdateRequest.getApproveProposalV1() != null && omobilityLasUpdateRequest.getApproveProposalV1().getSignature() != null) {
             GregorianCalendar calendar = new GregorianCalendar();
 
@@ -173,7 +173,6 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
         }*/
         OmobilityLasUpdateRequest omobilityLasUpdateRequest = OmobilityLasConverters.fromDto(omobilityLasUpdateRequestDto);
         LOG.fine("APPROVE: start");
-        LOG.fine("APPROVE: ownId: " + id);
         LOG.fine("APPROVE request: " + omobilityLasUpdateRequest.toString());
 
         Map<String, String> map = registryClient.getOmobilityLasHeiUrls(omobilityLasUpdateRequest.getSendingHeiId());
@@ -195,8 +194,6 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
             return Response.status(response.getStatusCode()).entity(response.getErrorMessage()).build();
         }
 
-        learningAgreementEJB.approveChangesProposal(omobilityLasUpdateRequest, id);
-
         OmobilityLasUpdateResponse omobilityLasUpdateResponse = (OmobilityLasUpdateResponse) response.getResult();
 
         return Response.ok(omobilityLasUpdateResponse).build();
@@ -205,7 +202,7 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
     @POST
     @Path("update/reject")
     @Consumes(MediaType.APPLICATION_XML)
-    public Response updateReject(@QueryParam("id") String id, OmobilityLasUpdateRequestDto omobilityLasUpdateRequestDto) throws JAXBException, IOException, DatatypeConfigurationException {
+    public Response updateReject(OmobilityLasUpdateRequestDto omobilityLasUpdateRequestDto) throws JAXBException, IOException, DatatypeConfigurationException {
         /*if (omobilityLasUpdateRequest.getCommentProposalV1() != null && omobilityLasUpdateRequest.getCommentProposalV1().getSignature() != null) {
             GregorianCalendar calendar = new GregorianCalendar();
 
@@ -217,7 +214,6 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
         }*/
         OmobilityLasUpdateRequest omobilityLasUpdateRequest = OmobilityLasConverters.fromDto(omobilityLasUpdateRequestDto);
         LOG.fine("REJCET: start");
-        LOG.fine("REJCET: ownId: " + id);
         LOG.fine("REJCET request: " + omobilityLasUpdateRequest.toString());
 
         Map<String, String> map = registryClient.getOmobilityLasHeiUrls(omobilityLasUpdateRequest.getSendingHeiId());
@@ -238,8 +234,6 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
         if (response.getStatusCode() != Response.Status.OK.getStatusCode()) {
             return Response.status(response.getStatusCode()).entity(response.getErrorMessage()).build();
         }
-
-        learningAgreementEJB.rejectChangesProposal(omobilityLasUpdateRequest, id);
 
         OmobilityLasUpdateResponse omobilityLasUpdateResponse = (OmobilityLasUpdateResponse) response.getResult();
 
