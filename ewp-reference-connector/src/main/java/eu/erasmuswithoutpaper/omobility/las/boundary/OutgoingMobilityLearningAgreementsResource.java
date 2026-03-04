@@ -300,6 +300,7 @@ public class OutgoingMobilityLearningAgreementsResource {
             try {
                 String rawBody = algoriaResponse.readEntity(String.class);
                 if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                    LOG.warning("Algoria update failed. HTTP " + algoriaResponse.getStatus() + ". Response body:\n" + rawBody);
                     throw new EwpWebApplicationException("Update failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
                 }
                 try {
