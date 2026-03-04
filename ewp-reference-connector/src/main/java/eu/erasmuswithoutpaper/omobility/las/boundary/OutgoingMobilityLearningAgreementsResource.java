@@ -387,6 +387,17 @@ public class OutgoingMobilityLearningAgreementsResource {
             JsonNode statsNode = root.get("academicYearLaStats");
             if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
                 ((ObjectNode) root).set("academicYearLaStats", statsNode.get(0));
+                statsNode = root.get("academicYearLaStats");
+            }
+            if (statsNode != null && statsNode.isArray()) {
+                for (JsonNode statNode : statsNode) {
+                    if (statNode.isObject()) {
+                        JsonNode yearNode = statNode.get("receivingAcademicYearId");
+                        if (yearNode != null && yearNode.isTextual()) {
+                            ((ObjectNode) statNode).put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                        }
+                    }
+                }
             }
 
             LasOutgoingStatsResponse response = mapper.convertValue(root, LasOutgoingStatsResponse.class);
@@ -742,6 +753,19 @@ public class OutgoingMobilityLearningAgreementsResource {
         } catch (NumberFormatException e) {
             return BigInteger.ZERO;
         }
+    }
+
+    private String normalizeAcademicYearId(String academicYearId) {
+        if (academicYearId == null) {
+            return null;
+        }
+        String trimmed = academicYearId.trim();
+        String[] parts = trimmed.split("/");
+        if (parts.length == 2 && parts[0].matches("\\d{4}") && parts[1].matches("\\d{2}")) {
+            int startYear = Integer.parseInt(parts[0]);
+            return startYear + "/" + (startYear + 1);
+        }
+        return trimmed;
     }
 
     private void pruneNulls(JsonNode node) {
