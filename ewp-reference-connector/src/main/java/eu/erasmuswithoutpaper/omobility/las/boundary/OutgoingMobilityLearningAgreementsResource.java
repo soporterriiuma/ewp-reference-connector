@@ -363,7 +363,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         }
         String heiId = institutionList.get(0).getInstitutionId();
 
-        String url = properties.getAlgoriaOmobilityLasUrl(heiId) + "stats/";
+        String url = properties.getAlgoriaOmobilityLasStatsUrl();
         String token = properties.getAlgoriaAuthotizationToken();
         LOG.info("Algoria stats outbound method=GET");
         LOG.info("Algoria stats outbound url=" + url);

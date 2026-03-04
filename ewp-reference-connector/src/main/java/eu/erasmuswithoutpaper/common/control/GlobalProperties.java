@@ -270,6 +270,19 @@ public class GlobalProperties {
         return defaultAlgoriaAuthorizationToken;
     }
 
+    public String getAlgoriaOmobilityLasStatsUrl() {
+        String base = defaultAlgoriaOmobilityLasUrl;
+        try {
+            base = configEJB.getValue("algoria.omobility.las.url", defaultAlgoriaOmobilityLasUrl);
+        } catch (Exception e) {
+            base = defaultAlgoriaOmobilityLasUrl;
+        }
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + "stats/";
+    }
+
     public String getAlgoriaOmobilityLasUrl(String heiId) {
         String base = defaultAlgoriaOmobilityLasUrl;
         try {
