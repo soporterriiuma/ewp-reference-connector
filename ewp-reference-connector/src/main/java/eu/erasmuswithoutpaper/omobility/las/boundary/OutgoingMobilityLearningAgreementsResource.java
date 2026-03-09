@@ -95,7 +95,7 @@ public class OutgoingMobilityLearningAgreementsResource {
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(OutgoingMobilityLearningAgreementsResource.class.getCanonicalName());
 
-    @GET
+    /*@GET
     @Path("index")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
@@ -111,17 +111,25 @@ public class OutgoingMobilityLearningAgreementsResource {
     public javax.ws.rs.core.Response indexPost(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
                                                @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces) {
         return omobilityLasIndex(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
-    }
+    }*/
 
     @GET
-    @Path("index_test")
+    @Path("index")
     @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response indexGetTest(@QueryParam("sending_hei_id") List<String> sendingHeiIds, @QueryParam("receiving_hei_id") List<String> receivingHeiIdList, @QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
+    public javax.ws.rs.core.Response indexGet(@QueryParam("sending_hei_id") List<String> sendingHeiIds, @QueryParam("receiving_hei_id") List<String> receivingHeiIdList, @QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
                                               @QueryParam("global_id") List<String> globalIds, @QueryParam("mobility_type") List<String> mobilityTypes, @QueryParam("modified_since") List<String> modifiedSinces) {
         return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
     }
 
-    @GET
+    @POST
+    @Path("index")
+    @Produces(MediaType.APPLICATION_XML)
+    public javax.ws.rs.core.Response indexPost(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
+                                               @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces) {
+        return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+    }
+
+    /*@GET
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
@@ -135,16 +143,23 @@ public class OutgoingMobilityLearningAgreementsResource {
     @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetPost(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
         return mobilityGet(sendingHeiId, mobilityIdList);
-    }
+    }*/
 
     @GET
-    @Path("test_get")
+    @Path("get")
     @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response omobilityGetGetTest(@QueryParam("sending_hei_id") List<String> sendingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
+    public javax.ws.rs.core.Response omobilityGetGet(@QueryParam("sending_hei_id") List<String> sendingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
         return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
     }
 
     @POST
+    @Path("get")
+    @Produces(MediaType.APPLICATION_XML)
+    public javax.ws.rs.core.Response omobilityGetPost(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
+        return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
+    }
+
+    /*@POST
     @Path("update")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
@@ -156,17 +171,6 @@ public class OutgoingMobilityLearningAgreementsResource {
         if (request.getSendingHeiId() == null || request.getSendingHeiId().isEmpty()) {
             throw new EwpWebApplicationException("Mising required parameter, sending-hei-id is required", Response.Status.BAD_REQUEST);
         }
-
-        /*Collection<String> heisCoveredByCertificate;
-        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
-            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
-        } else {
-            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
-        }
-
-        if (!heisCoveredByCertificate.contains(request.getSendingHeiId())) {
-            throw new EwpWebApplicationException("The client signature does not cover the receiving HEI of the mobility.", Response.Status.BAD_REQUEST);
-        }*/
 
         if (request.getCommentProposalV1() == null && request.getApproveProposalV1() == null) {
             throw new EwpWebApplicationException("Mising required parameter, approve-proposal-v1 and comment-proposal-v1 both of them can not be missing", Response.Status.BAD_REQUEST);
@@ -235,11 +239,12 @@ public class OutgoingMobilityLearningAgreementsResource {
         response.getSuccessUserMessage().add(message);
 
         return javax.ws.rs.core.Response.ok(response).build();
-    }
+    }*/
 
     @POST
-    @Path("update_test")
+    @Path("update")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoria(OmobilityLasUpdateRequest request) {
         if (request == null) {
             throw new EwpWebApplicationException("No update data was sent", Response.Status.BAD_REQUEST);
@@ -338,7 +343,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     }
 
 
-    @GET
+    /*@GET
     @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
@@ -350,10 +355,10 @@ public class OutgoingMobilityLearningAgreementsResource {
         String heiId = institutionList.get(0).getId();
 
         return omobilityStatsGet(heiId);
-    }
+    }*/
 
     @GET
-    @Path("test_stats")
+    @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
         LOG.info("---- START /omobilities/las/test_stats ----");
@@ -478,7 +483,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
     }
 
-    private javax.ws.rs.core.Response omobilityStatsGet(String heiId) {
+    /*private javax.ws.rs.core.Response omobilityStatsGet(String heiId) {
         LasOutgoingStatsResponse response = new LasOutgoingStatsResponse();
 
         //Filter learning agreement 
@@ -501,11 +506,8 @@ public class OutgoingMobilityLearningAgreementsResource {
             omobilityLasList.forEach(olas -> {
                 Set<String> keys = olearningAgreementGroupByYear.keySet();
 
-                /*For LAs the smallest reported academic year should be 2021/2022. All earlier academic years, if present in data, will be skipped.*/
                 String[] years = olas.getReceivingAcademicTermEwpId().split("/");
                 if ((Integer.parseInt(years[0]) >= Integer.parseInt("2021")) && (Integer.parseInt(years[1]) >= Integer.parseInt("2022"))) {
-                    /*ReceivingAcademicTermEwpId: Academic year during which this mobility takes place.HEIs MAY use different academic year
-                    identifiers (e.g. "2010/2011" vs. "2010/2010" or "2011/2011")*/
                     if (keys.contains(olas.getReceivingAcademicTermEwpId())) {
                         List<OlearningAgreement> group = olearningAgreementGroupByYear.get(olas.getReceivingAcademicTermEwpId());
 
@@ -579,19 +581,18 @@ public class OutgoingMobilityLearningAgreementsResource {
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
-    }
+    }*/
 
-    private List<LasOutgoingStatsResponse.AcademicYearLaStats> omobilitiesLasStats(List<AcademicYearLaStats> academicYearStats) {
+    /*private List<LasOutgoingStatsResponse.AcademicYearLaStats> omobilitiesLasStats(List<AcademicYearLaStats> academicYearStats) {
         List<LasOutgoingStatsResponse.AcademicYearLaStats> omobilitiesLasStats = new ArrayList<>();
         academicYearStats.stream().forEachOrdered((m) -> {
             omobilitiesLasStats.add(converter.convertToLearningAgreementsStats(m));
         });
 
         return omobilitiesLasStats;
-    }
+    }*/
 
-
-    private javax.ws.rs.core.Response mobilityGet(List<String> sendingHeiIds, List<String> mobilityIdList) {
+    /*private javax.ws.rs.core.Response mobilityGet(List<String> sendingHeiIds, List<String> mobilityIdList) {
         if (sendingHeiIds != null && sendingHeiIds.size() > 1) {
             throw new EwpWebApplicationException("Only one sending HEI ID is allowed.", Response.Status.BAD_REQUEST);
         }
@@ -616,21 +617,11 @@ public class OutgoingMobilityLearningAgreementsResource {
 
         if (!omobilityLasList.isEmpty()) {
 
-            /*Collection<String> heisCoveredByCertificate;
-            if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
-                heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
-            } else {
-                heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
-            }*/
 
             //checking if caller covers the receiving HEI of this mobility,
             //omobilityLasList = omobilityLasList.stream().filter(omobility -> heisCoveredByCertificate.contains(omobility.getReceivingHei().getHeiId())).collect(Collectors.toList());
             LOG.fine("GETREQUEST FROM PARTNER: FOR:" + omobilityLasList.get(0).getId());
-            /*if (omobilityLasList.get(0).getFromPartner()) {
-                return javax.ws.rs.core.Response.ok(getRequestToClient(omobilityLasList.get(0).getOmobilityId(), sendingHeiId)).type(MediaType.APPLICATION_XML).build();
-            } else {
-                response.getLa().addAll(omobilitiesLas(omobilityLasList, mobilityIdList));
-            }*/
+
             response.getLa().addAll(omobilitiesLas(omobilityLasList, mobilityIdList));
         } else {
             LOG.fine("omobilityLasList is empty");
@@ -638,7 +629,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
-    }
+    }*/
 
     private javax.ws.rs.core.Response mobilityGetAlgoria(List<String> sendingHeiIds, List<String> mobilityIdList) {
         if (sendingHeiIds != null && sendingHeiIds.size() > 1) {
@@ -712,47 +703,6 @@ public class OutgoingMobilityLearningAgreementsResource {
     private void stripTimezone(XMLGregorianCalendar cal) {
         if (cal != null) {
             cal.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
-        }
-    }
-
-    private JsonNode firstExistingField(JsonNode parent, String... names) {
-        if (parent == null || names == null) {
-            return null;
-        }
-        for (String name : names) {
-            JsonNode value = parent.get(name);
-            if (value != null && !value.isNull()) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    private String readStringField(JsonNode parent, String... names) {
-        JsonNode node = firstExistingField(parent, names);
-        if (node == null || node.isNull()) {
-            return null;
-        }
-        String value = node.asText(null);
-        return value == null || value.trim().isEmpty() ? null : value;
-    }
-
-    private BigInteger readBigIntegerField(JsonNode parent, String... names) {
-        JsonNode node = firstExistingField(parent, names);
-        if (node == null || node.isNull()) {
-            return BigInteger.ZERO;
-        }
-        if (node.isIntegralNumber()) {
-            return node.bigIntegerValue();
-        }
-        String value = node.asText(null);
-        if (value == null || value.trim().isEmpty()) {
-            return BigInteger.ZERO;
-        }
-        try {
-            return new BigInteger(value.trim());
-        } catch (NumberFormatException e) {
-            return BigInteger.ZERO;
         }
     }
 
@@ -886,46 +836,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         }
     }
 
-    private String getRequestToClient(String omobilityId, String heiId) {
-        Map<String, String> map = registryClient.getOmobilityLasHeiUrls(heiId);
-        LOG.fine("OmobilitiesLasAuxThread: map: " + (map == null ? "null" : map.toString()));
-        if (map == null || map.isEmpty()) {
-            LOG.fine("OmobilitiesLasAuxThread: No LAS URLs found for HEI " + heiId);
-            return null;
-        }
-
-        String url = map.get("get-url");
-
-        ClientRequest clientRequest = new ClientRequest();
-        clientRequest.setUrl(url);
-        clientRequest.setHeiId(heiId);
-        clientRequest.setMethod(HttpMethodEnum.POST);
-        clientRequest.setHttpsec(true);
-
-        LOG.fine("OmobilitiesLasAuxThread: url: " + url);
-
-        Map<String, List<String>> paramsMap = new HashMap<>();
-        paramsMap.put("sending_hei_id", Collections.singletonList(heiId));
-        paramsMap.put("omobility_id", Collections.singletonList(omobilityId));
-        ParamsClass paramsClass = new ParamsClass();
-        paramsClass.setUnknownFields(paramsMap);
-        clientRequest.setParams(paramsClass);
-
-        LOG.fine("OmobilitiesLasAuxThread: params: " + paramsMap.toString());
-
-        ClientResponse omobilityLasGetResponse = restClient.sendRequest(clientRequest, OmobilityLasGetResponse.class);
-
-        LOG.fine("NOTIFY: response: " + omobilityLasGetResponse.getRawResponse());
-
-        if (omobilityLasGetResponse.getStatusCode() != Response.Status.OK.getStatusCode()) {
-            return null;
-        }
-
-        return omobilityLasGetResponse.getRawResponse();
-
-    }
-
-    private javax.ws.rs.core.Response omobilityLasIndex(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
+    /*private javax.ws.rs.core.Response omobilityLasIndex(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
         String receiving_academic_year_id;
         String globalId;
         String mobilityType;
@@ -1044,7 +955,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         //}
 
         return javax.ws.rs.core.Response.ok(response).build();
-    }
+    }*/
 
     private javax.ws.rs.core.Response omobilityLasIndexAlgoria(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
         LOG.info("omobilityLasIndexAlgoria: Starting index request with parameters: sendingHeiIds=" + sendingHeiIds);
@@ -1175,7 +1086,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }
 
-    private List<LearningAgreement> omobilitiesLas(List<OlearningAgreement> omobilityLasList, List<String> omobilityLasIdList) {
+    /*private List<LearningAgreement> omobilitiesLas(List<OlearningAgreement> omobilityLasList, List<String> omobilityLasIdList) {
         List<LearningAgreement> omobilitiesLas = new ArrayList<>();
         omobilityLasList.stream().forEachOrdered((m) -> {
             if (omobilityLasIdList.contains(m.getId())) {
@@ -1184,9 +1095,9 @@ public class OutgoingMobilityLearningAgreementsResource {
         });
 
         return omobilitiesLas;
-    }
+    }*/
 
-    private List<String> omobilityLasIds(List<OlearningAgreement> lasList, List<String> receivingHeiIdList) {
+    /*private List<String> omobilityLasIds(List<OlearningAgreement> lasList, List<String> receivingHeiIdList) {
         List<String> omobilityLasIds = new ArrayList<>();
 
         lasList.stream().forEachOrdered((m) -> {
@@ -1196,9 +1107,9 @@ public class OutgoingMobilityLearningAgreementsResource {
         });
 
         return omobilityLasIds;
-    }
+    }*/
 
-    BiPredicate<OlearningAgreement, String> anyMatchReceivingAcademicYear = new BiPredicate<OlearningAgreement, String>() {
+    /*BiPredicate<OlearningAgreement, String> anyMatchReceivingAcademicYear = new BiPredicate<OlearningAgreement, String>() {
         @Override
         public boolean test(OlearningAgreement omobility, String receiving_academic_year_id) {
             return receiving_academic_year_id.equals(omobility.getReceivingAcademicTermEwpId());
@@ -1235,5 +1146,5 @@ public class OutgoingMobilityLearningAgreementsResource {
             }
             return false;
         }
-    };
+    };*/
 }
