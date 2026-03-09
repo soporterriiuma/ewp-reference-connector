@@ -116,6 +116,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @GET
     @Path("index")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response indexGet(@QueryParam("sending_hei_id") List<String> sendingHeiIds, @QueryParam("receiving_hei_id") List<String> receivingHeiIdList, @QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
                                               @QueryParam("global_id") List<String> globalIds, @QueryParam("mobility_type") List<String> mobilityTypes, @QueryParam("modified_since") List<String> modifiedSinces) {
         return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
@@ -124,6 +125,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @POST
     @Path("index")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response indexPost(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
                                                @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces) {
         return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
@@ -148,6 +150,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @GET
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetGet(@QueryParam("sending_hei_id") List<String> sendingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
         return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
     }
@@ -155,6 +158,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @POST
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetPost(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
         return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
     }
@@ -360,6 +364,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @GET
     @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
         LOG.info("---- START /omobilities/las/test_stats ----");
 
