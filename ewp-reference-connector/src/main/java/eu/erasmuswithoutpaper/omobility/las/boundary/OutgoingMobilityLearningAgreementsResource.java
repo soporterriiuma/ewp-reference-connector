@@ -61,6 +61,7 @@ import eu.erasmuswithoutpaper.omobility.las.entity.*;
 import eu.erasmuswithoutpaper.omobility.las.dto.AlgoriaOmobilityLasIndexDto;
 import eu.erasmuswithoutpaper.organization.entity.Institution;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
+import eu.erasmuswithoutpaper.security.InternalAuthenticate;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -131,6 +132,15 @@ public class OutgoingMobilityLearningAgreementsResource {
         return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
     }
 
+    @POST
+    @Path("index_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response indexPostTest(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
+                                               @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces) {
+        return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+    }
+
     /*@GET
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
@@ -160,6 +170,14 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetPost(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
+        return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
+    }
+
+    @POST
+    @Path("get_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response omobilityGetPostTest(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
         return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
     }
 
