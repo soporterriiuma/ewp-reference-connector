@@ -132,7 +132,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
     }
 
-    @POST
+    @GET
     @Path("index_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
@@ -173,7 +173,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
     }
 
-    @POST
+    @GET
     @Path("get_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
