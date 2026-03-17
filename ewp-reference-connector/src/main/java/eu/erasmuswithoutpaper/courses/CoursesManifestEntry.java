@@ -15,7 +15,7 @@ import eu.erasmuswithoutpaper.common.control.GlobalProperties;
 import javax.inject.Inject;
 import java.math.BigInteger;
 
-//@PublicAPI
+@PublicAPI
 public class CoursesManifestEntry implements ManifestEntryStrategy {
     @Inject
     GlobalProperties globalProperties;
@@ -23,14 +23,14 @@ public class CoursesManifestEntry implements ManifestEntryStrategy {
     @Override
     public ManifestApiEntryBase getManifestEntry(String baseUri) {
         Courses courses = new Courses();
-        /*courses.setVersion(EwpConstants.COURSES_VERSION);
+        courses.setVersion(EwpConstants.COURSES_VERSION);
         courses.setUrl(baseUri + "courses");
         courses.setMaxLosCodes(BigInteger.valueOf(globalProperties.getMaxLosCodes()));
         courses.setMaxLosIds(BigInteger.valueOf(globalProperties.getMaxLosIds()));
 
         HttpSecurityOptions httpSecurityOptions = new HttpSecurityOptions();
         
-        HttpSecurityOptions.ClientAuthMethods clientAuthMethods = new HttpSecurityOptions.ClientAuthMethods();*/
+        HttpSecurityOptions.ClientAuthMethods clientAuthMethods = new HttpSecurityOptions.ClientAuthMethods();
         
         /*CliauthTlscert cliauthtlscert = new CliauthTlscert();
         cliauthtlscert.setAllowsSelfSigned(false);
@@ -38,7 +38,7 @@ public class CoursesManifestEntry implements ManifestEntryStrategy {
         
 //        clientAuthMethods.getAny().add(new Anonymous());
         
-        /*clientAuthMethods.getAny().add(new CliauthHttpsig());
+        clientAuthMethods.getAny().add(new CliauthHttpsig());
         
         httpSecurityOptions.setClientAuthMethods(clientAuthMethods);
         
@@ -50,7 +50,7 @@ public class CoursesManifestEntry implements ManifestEntryStrategy {
         httpSecurityOptions.setServerAuthMethods(serverAuthMethods);
         courses.setHttpSecurity(httpSecurityOptions);
         
-       // iias.setSendsNotifications(new Empty());*/
+       // iias.setSendsNotifications(new Empty());
         return courses;
     }
 }
