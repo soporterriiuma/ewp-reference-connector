@@ -192,13 +192,15 @@ public class CourseConverter {
         }
         switch (language.toLowerCase()) {
             case "english":
+            case "inglés":
                 return "en-US";
             case "french":
+            case "francés":
                 return "fr-FR";
             case "german":
+            case "alemán":
                 return "de-DE";
             case "spanish":
-                return "es-ES";
             case "español":
                 return "es-ES";
             // Add more languages as needed
