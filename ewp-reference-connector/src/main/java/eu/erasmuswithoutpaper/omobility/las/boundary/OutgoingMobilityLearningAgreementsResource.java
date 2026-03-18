@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.architecture.MultilineStringWithOptionalLang;
+import eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.stats.LasIncomingStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.LasOutgoingStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.LearningAgreement;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.OmobilityLasGetResponse;
@@ -506,6 +507,33 @@ public class OutgoingMobilityLearningAgreementsResource {
         eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory factory = new eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory();
 
         return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
+    }
+
+    @GET
+    @Path("cnr/stats")
+    @Produces(MediaType.APPLICATION_JSON)
+    public javax.ws.rs.core.Response omobilityGetStatsCnrAlgoria() {
+        LOG.info("---- START /omobilities/las/cnr/stats ----");
+        LasIncomingStatsResponse response = new LasIncomingStatsResponse();
+        LasIncomingStatsResponse.AcademicYearLaStats test1 = new LasIncomingStatsResponse.AcademicYearLaStats();
+        test1.setReceivingAcademicYearId("2021/2022");
+        test1.setLaIncomingTotal(BigInteger.valueOf(10));
+        test1.setLaIncomingLatestVersionApproved(BigInteger.valueOf(5));
+        test1.setLaIncomingLatestVersionAwaiting(BigInteger.valueOf(3));
+        test1.setLaIncomingLatestVersionRejected(BigInteger.valueOf(2));
+        test1.setLaIncomingSomeVersionApproved(BigInteger.valueOf(2));
+        response.getAcademicYearLaStats().add(test1);
+
+        LasIncomingStatsResponse.AcademicYearLaStats test2 = new LasIncomingStatsResponse.AcademicYearLaStats();
+        test2.setReceivingAcademicYearId("2022/2023");
+        test2.setLaIncomingTotal(BigInteger.valueOf(8));
+        test2.setLaIncomingLatestVersionApproved(BigInteger.valueOf(3));
+        test2.setLaIncomingLatestVersionAwaiting(BigInteger.valueOf(2));
+        test2.setLaIncomingLatestVersionRejected(BigInteger.valueOf(1));
+        test2.setLaIncomingSomeVersionApproved(BigInteger.valueOf(8));
+        response.getAcademicYearLaStats().add(test2);
+
+        return Response.ok(response).build();
     }
 
     /*private javax.ws.rs.core.Response omobilityStatsGet(String heiId) {

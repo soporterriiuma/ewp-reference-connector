@@ -25,6 +25,7 @@ public class OutgoingMobilityLearningAgreementsCnrManifestEntry implements Manif
     	OmobilityLaCnr mobilitieslas = new OmobilityLaCnr();
         mobilitieslas.setVersion(EwpConstants.OUTGOING_MOBILITIES_CNR_CLIENT_VERSION);
         mobilitieslas.setUrl(baseUri + "omobilities/las/cnr");
+        //mobilitieslas.setStatsUrl(baseUri + "omobilities/las/cnr/stats");
         
         mobilitieslas.setMaxOmobilityIds(BigInteger.valueOf(globalProperties.getMaxOmobilitylasIds()));
 

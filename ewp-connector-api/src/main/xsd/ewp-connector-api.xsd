@@ -246,6 +246,10 @@
             namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-la-cnr/tree/stable-v1"
     />
     <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-la-cnr/stable-v1/endpoints/stats-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-la-cnr/tree/stable-v1/endpoints/stats-response.xsd"
+    />
+    <xs:import
             schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-la-cnr/stable-v1/manifest-entry.xsd"
             namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-la-cnr/blob/stable-v1/manifest-entry.xsd"
     />
