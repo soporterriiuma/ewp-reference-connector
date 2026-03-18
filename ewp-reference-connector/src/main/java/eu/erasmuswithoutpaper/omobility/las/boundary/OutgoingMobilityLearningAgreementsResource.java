@@ -389,18 +389,11 @@ public class OutgoingMobilityLearningAgreementsResource {
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
         LOG.info("---- START /omobilities/las/test_stats ----");
 
-        List<Institution> institutionList = learningAgreementEJB.getInternalInstitution();
-        if (institutionList.size() != 1) {
-            throw new IllegalStateException("Internal error: more than one insitution covered");
-        }
-        String heiId = institutionList.get(0).getInstitutionId();
-
         String url = properties.getAlgoriaOmobilityLasStatsUrl();
         String token = properties.getAlgoriaAuthotizationToken();
         LOG.info("Algoria stats outbound method=GET");
         LOG.info("Algoria stats outbound url=" + url);
         LOG.info("Algoria stats outbound header Authorization=" + token);
-        LOG.info("Algoria stats resolved heiId=" + heiId);
 
         Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
@@ -509,32 +502,63 @@ public class OutgoingMobilityLearningAgreementsResource {
         return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
     }
 
-    @GET
+    /*@GET
     @Path("cnr/stats")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetStatsCnrAlgoria() {
-        LOG.info("---- START /omobilities/las/cnr/stats ----");
-        LasIncomingStatsResponse response = new LasIncomingStatsResponse();
-        LasIncomingStatsResponse.AcademicYearLaStats test1 = new LasIncomingStatsResponse.AcademicYearLaStats();
-        test1.setReceivingAcademicYearId("2021/2022");
-        test1.setLaIncomingTotal(BigInteger.valueOf(10));
-        test1.setLaIncomingLatestVersionApproved(BigInteger.valueOf(5));
-        test1.setLaIncomingLatestVersionAwaiting(BigInteger.valueOf(3));
-        test1.setLaIncomingLatestVersionRejected(BigInteger.valueOf(2));
-        test1.setLaIncomingSomeVersionApproved(BigInteger.valueOf(2));
-        response.getAcademicYearLaStats().add(test1);
+        LOG.info("---- START /omobilities/las/test_stats ----");
 
-        LasIncomingStatsResponse.AcademicYearLaStats test2 = new LasIncomingStatsResponse.AcademicYearLaStats();
-        test2.setReceivingAcademicYearId("2022/2023");
-        test2.setLaIncomingTotal(BigInteger.valueOf(8));
-        test2.setLaIncomingLatestVersionApproved(BigInteger.valueOf(3));
-        test2.setLaIncomingLatestVersionAwaiting(BigInteger.valueOf(2));
-        test2.setLaIncomingLatestVersionRejected(BigInteger.valueOf(1));
-        test2.setLaIncomingSomeVersionApproved(BigInteger.valueOf(8));
-        response.getAcademicYearLaStats().add(test2);
+        String url = properties.getAlgoriaOmobilityLasStatsCnrUrl();
+        String token = properties.getAlgoriaAuthotizationToken();
+        LOG.info("Algoria cnr/stats outbound method=GET");
+        LOG.info("Algoria cnr/stats outbound url=" + url);
+        LOG.info("Algoria cnr/stats outbound header Authorization=" + token);
 
-        return Response.ok(response).build();
-    }
+        Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            LOG.info("Algoria cnr/stats response status=" + algoriaResponse.getStatus());
+            LOG.info("Algoria cnr/stats response headers=" + algoriaResponse.getStringHeaders());
+            LOG.info("Algoria cnr/stats raw body:\n" + rawBody);
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                throw new EwpWebApplicationException("Stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            JsonNode root = mapper.readTree(rawBody);
+            JsonNode statsNode = root.get("academicYearLaStats");
+            if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
+                ((ObjectNode) root).set("academicYearLaStats", statsNode.get(0));
+                statsNode = root.get("academicYearLaStats");
+            }
+            if (statsNode != null && statsNode.isArray()) {
+                for (JsonNode statNode : statsNode) {
+                    if (statNode.isObject()) {
+                        JsonNode yearNode = statNode.get("receivingAcademicYearId");
+                        if (yearNode != null && yearNode.isTextual()) {
+                            ((ObjectNode) statNode).put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                        }
+                    }
+                }
+            }
+
+            LasIncomingStatsResponse response = mapper.convertValue(root, LasIncomingStatsResponse.class);
+            LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
+            return javax.ws.rs.core.Response.ok(response).build();
+        } catch (EwpWebApplicationException e) {
+            LOG.warning("Algoria stats failed with known error: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            LOG.warning("Algoria stats response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria stats parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("Stats request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
+        }
+    }*/
 
     /*private javax.ws.rs.core.Response omobilityStatsGet(String heiId) {
         LasOutgoingStatsResponse response = new LasOutgoingStatsResponse();
