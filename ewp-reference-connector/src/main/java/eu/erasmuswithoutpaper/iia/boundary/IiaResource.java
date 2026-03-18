@@ -384,6 +384,47 @@ public class IiaResource {
 
     }
 
+    @GET
+    @Path("stats_json")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response iiaGetStatsJson() {
+        IiasStatsResponse response = new IiasStatsResponse();
+
+        List<Iia> nonApprovedIias = iiasEjb.findAllNoneApproved();
+        List<Iia> approvedIias = iiasEjb.findAllApproved();
+        List<Iia> justDraftIias = iiasEjb.findAllJustDraft();
+
+        String localHeiId = iiasEjb.getHeiId();
+
+        int iiaPartnerUnapproved = 0;
+        int iiaLocallyUnapproved = 0;
+
+        for (Iia iia : justDraftIias) {
+            List<IiaApproval> iiaApprovals = iiasEjb.findIiaApproval(iia.getId());
+
+            if (iiaApprovals != null && !iiaApprovals.isEmpty()) {
+                boolean localApproved = iiaApprovals.stream().anyMatch(iiaApproval -> iiaApproval.getHeiId().equals(localHeiId));
+                boolean partnerApproved = iiaApprovals.stream().anyMatch(iiaApproval -> !iiaApproval.getHeiId().equals(localHeiId));
+
+
+                if (localApproved && !partnerApproved) {
+                    iiaPartnerUnapproved++;
+                } else if (!localApproved && partnerApproved) {
+                    iiaLocallyUnapproved++;
+                }
+            }
+        }
+
+
+        response.setIiaFetchable(BigInteger.valueOf(nonApprovedIias.size()));
+        response.setIiaLocalApprovedPartnerUnapproved(BigInteger.valueOf(iiaPartnerUnapproved));
+        response.setIiaLocalUnapprovedPartnerApproved(BigInteger.valueOf(iiaLocallyUnapproved));
+        response.setIiaBothApproved(BigInteger.valueOf(approvedIias.size()));
+
+        return Response.ok(response).build();
+    }
+
     private javax.ws.rs.core.Response iiaGet(List<String> iiaIdList) {
         IiasGetResponse response = new IiasGetResponse();
 
