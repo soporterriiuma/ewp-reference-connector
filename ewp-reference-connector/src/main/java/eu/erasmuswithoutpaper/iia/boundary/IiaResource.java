@@ -86,7 +86,7 @@ public class IiaResource {
         return iiaIndex(receiving_academic_year_id, modified_since);
     }
 
-    /*@GET
+    @GET
     @Path("index_json")
     @Produces(MediaType.APPLICATION_JSON)
     public javax.ws.rs.core.Response indexGetJson(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @QueryParam("modified_since") List<String> modified_since, @QueryParam("sender_hei_id") String senderHeiId) {
@@ -187,7 +187,7 @@ public class IiaResource {
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
-    }*/
+    }
 
     private javax.ws.rs.core.Response iiaIndex(List<String> receiving_academic_year_id, List<String> modified_since) {
 
