@@ -386,8 +386,7 @@ public class IiaResource {
 
     @GET
     @Path("stats_json")
-    @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
+    @Produces(MediaType.APPLICATION_JSON)
     public javax.ws.rs.core.Response iiaGetStatsJson() {
         IiasStatsResponse response = new IiasStatsResponse();
 
