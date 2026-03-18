@@ -86,109 +86,6 @@ public class IiaResource {
         return iiaIndex(receiving_academic_year_id, modified_since);
     }
 
-    @GET
-    @Path("index_json")
-    @Produces(MediaType.APPLICATION_JSON)
-    public javax.ws.rs.core.Response indexGetJson(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @QueryParam("modified_since") List<String> modified_since, @QueryParam("sender_hei_id") String senderHeiId) {
-
-        if (modified_since != null && modified_since.size() > 1) {
-            throw new EwpWebApplicationException("Not allow more than one value of modified_since", Response.Status.BAD_REQUEST);
-        }
-
-        //receiving_academic_year_id
-        if (receiving_academic_year_id != null) {
-            boolean match = true;
-            Iterator<String> iterator = receiving_academic_year_id.iterator();
-            while (iterator.hasNext() && match) {
-                String yearId = (String) iterator.next();
-
-                if (!yearId.matches("\\d{4}\\/\\d{4}")) {
-                    match = false;
-                }
-            }
-
-            if (!match) {
-                throw new EwpWebApplicationException("receiving_academic_year_id is not in the correct format", Response.Status.BAD_REQUEST);
-            }
-        }
-
-        IiasIndexResponse response = new IiasIndexResponse();
-        List<Iia> filteredIiaList = iiasEjb.findAll();
-
-        LOG.fine("Filtered:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
-
-        if(!filteredIiaList.isEmpty()){
-            filteredIiaList = filteredIiaList.stream().filter(iia ->
-                    iia.getCooperationConditions().stream().anyMatch(c ->
-                            senderHeiId.equals(c.getReceivingPartner().getInstitutionId()) ||
-                                    senderHeiId.equals(c.getSendingPartner().getInstitutionId())
-                    )
-            ).collect(Collectors.toList());
-        }
-
-        LOG.fine("Filtered 0:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
-
-        if (!filteredIiaList.isEmpty()) {
-
-            filteredIiaList = new ArrayList<>(filteredIiaList);
-
-            List<Iia> filteredIiaByReceivingAcademic = new ArrayList<>();
-            if (receiving_academic_year_id != null && !receiving_academic_year_id.isEmpty()) {
-
-                for (String year_id : receiving_academic_year_id) {
-                    List<Iia> filterefList = filteredIiaList.stream().filter(iia -> anyMatchBetweenReceivingAcademicYear.test(iia, year_id)).collect(Collectors.toList());
-
-                    filteredIiaByReceivingAcademic.addAll(filterefList);
-                }
-
-                filteredIiaList = new ArrayList<Iia>(filteredIiaByReceivingAcademic);
-            }
-
-            LOG.fine("Filtered 1:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
-
-            if (modified_since != null && !modified_since.isEmpty()) {
-
-                Calendar calendarModifySince = Calendar.getInstance();
-
-                List<Iia> tempFilteredModifiedSince = new ArrayList<>();
-
-                String modifiedValue = modified_since.get(0);
-                if (LOG.getLevel() != null) {
-                    LOG.log(LOG.getLevel(), "\n\n\n" + modifiedValue + "\n\n\n");
-                } else {
-                    LOG.log(Level.FINE, "\n\n\n" + modifiedValue + "\n\n\n");
-                }
-                Date date = javax.xml.bind.DatatypeConverter.parseDateTime(modifiedValue).getTime();
-                calendarModifySince.setTime(date);
-                List<Iia> aux = filteredIiaList.stream().filter(iia -> compareModifiedSince.test(iia, calendarModifySince)).collect(Collectors.toList());
-                if (aux != null) {
-                    tempFilteredModifiedSince.addAll(aux);
-                }
-
-                filteredIiaList = new ArrayList<>(tempFilteredModifiedSince);
-
-            }
-
-            LOG.fine("Filtered 2:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
-        }
-
-        LOG.fine("Filtered 3:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
-
-        if(!filteredIiaList.isEmpty()){
-            filteredIiaList = filteredIiaList.stream().filter(iia -> iia.getOriginal() == null).collect(Collectors.toList());
-        }
-
-        LOG.fine("Filtered INTERNAL:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
-
-        if (!filteredIiaList.isEmpty()) {
-            List<String> iiaIds = filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList());
-            LOG.fine("IIA IDs:" + iiaIds);
-            response.getIiaId().addAll(iiaIds);
-        }
-
-        return javax.ws.rs.core.Response.ok(response).build();
-    }
-
     private javax.ws.rs.core.Response iiaIndex(List<String> receiving_academic_year_id, List<String> modified_since) {
 
         Collection<String> heisCoveredByCertificate;
@@ -350,6 +247,141 @@ public class IiaResource {
         }
 
         return iiaGet(iiaIdList);
+    }
+
+    @GET
+    @Path("index_json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public javax.ws.rs.core.Response indexGetJson(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @QueryParam("modified_since") List<String> modified_since, @QueryParam("sender_hei_id") String senderHeiId) {
+
+        if (modified_since != null && modified_since.size() > 1) {
+            throw new EwpWebApplicationException("Not allow more than one value of modified_since", Response.Status.BAD_REQUEST);
+        }
+
+        //receiving_academic_year_id
+        if (receiving_academic_year_id != null) {
+            boolean match = true;
+            Iterator<String> iterator = receiving_academic_year_id.iterator();
+            while (iterator.hasNext() && match) {
+                String yearId = (String) iterator.next();
+
+                if (!yearId.matches("\\d{4}\\/\\d{4}")) {
+                    match = false;
+                }
+            }
+
+            if (!match) {
+                throw new EwpWebApplicationException("receiving_academic_year_id is not in the correct format", Response.Status.BAD_REQUEST);
+            }
+        }
+
+        IiasIndexResponse response = new IiasIndexResponse();
+        List<Iia> filteredIiaList = iiasEjb.findAll();
+
+        LOG.fine("Filtered:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
+
+        if(!filteredIiaList.isEmpty()){
+            filteredIiaList = filteredIiaList.stream().filter(iia ->
+                    iia.getCooperationConditions().stream().anyMatch(c ->
+                            senderHeiId.equals(c.getReceivingPartner().getInstitutionId()) ||
+                                    senderHeiId.equals(c.getSendingPartner().getInstitutionId())
+                    )
+            ).collect(Collectors.toList());
+        }
+
+        LOG.fine("Filtered 0:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
+
+        if (!filteredIiaList.isEmpty()) {
+
+            filteredIiaList = new ArrayList<>(filteredIiaList);
+
+            List<Iia> filteredIiaByReceivingAcademic = new ArrayList<>();
+            if (receiving_academic_year_id != null && !receiving_academic_year_id.isEmpty()) {
+
+                for (String year_id : receiving_academic_year_id) {
+                    List<Iia> filterefList = filteredIiaList.stream().filter(iia -> anyMatchBetweenReceivingAcademicYear.test(iia, year_id)).collect(Collectors.toList());
+
+                    filteredIiaByReceivingAcademic.addAll(filterefList);
+                }
+
+                filteredIiaList = new ArrayList<Iia>(filteredIiaByReceivingAcademic);
+            }
+
+            LOG.fine("Filtered 1:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
+
+            if (modified_since != null && !modified_since.isEmpty()) {
+
+                Calendar calendarModifySince = Calendar.getInstance();
+
+                List<Iia> tempFilteredModifiedSince = new ArrayList<>();
+
+                String modifiedValue = modified_since.get(0);
+                if (LOG.getLevel() != null) {
+                    LOG.log(LOG.getLevel(), "\n\n\n" + modifiedValue + "\n\n\n");
+                } else {
+                    LOG.log(Level.FINE, "\n\n\n" + modifiedValue + "\n\n\n");
+                }
+                Date date = javax.xml.bind.DatatypeConverter.parseDateTime(modifiedValue).getTime();
+                calendarModifySince.setTime(date);
+                List<Iia> aux = filteredIiaList.stream().filter(iia -> compareModifiedSince.test(iia, calendarModifySince)).collect(Collectors.toList());
+                if (aux != null) {
+                    tempFilteredModifiedSince.addAll(aux);
+                }
+
+                filteredIiaList = new ArrayList<>(tempFilteredModifiedSince);
+
+            }
+
+            LOG.fine("Filtered 2:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
+        }
+
+        LOG.fine("Filtered 3:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
+
+        if(!filteredIiaList.isEmpty()){
+            filteredIiaList = filteredIiaList.stream().filter(iia -> iia.getOriginal() == null).collect(Collectors.toList());
+        }
+
+        LOG.fine("Filtered INTERNAL:" + filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList()));
+
+        if (!filteredIiaList.isEmpty()) {
+            List<String> iiaIds = filteredIiaList.stream().map(Iia::getId).collect(Collectors.toList());
+            LOG.fine("IIA IDs:" + iiaIds);
+            response.getIiaId().addAll(iiaIds);
+        }
+
+        return javax.ws.rs.core.Response.ok(response).build();
+    }
+
+    @GET
+    @Path("get_json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public javax.ws.rs.core.Response getGetJson(@QueryParam("iia_id") List<String> iiaIdList) {
+        if (iiaIdList == null || iiaIdList.isEmpty()) {
+            throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
+        }
+
+        if (iiaIdList.size() > properties.getMaxIiaIds()) {
+            throw new EwpWebApplicationException("Max number of IIA ids has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+        IiasGetResponse response = new IiasGetResponse();
+
+        List<Iia> iiaList = iiaIdList.stream()
+                .map(id -> iiasEjb.findById(id))
+                .filter(Objects::nonNull)
+                .filter(iia -> iia.getOriginal() == null)
+                .collect(Collectors.toList());
+
+        LOG.fine("GET: iiaList.isEmpty(): " + iiaList.isEmpty());
+        if (!iiaList.isEmpty()) {
+            String localHeiId = iiasEjb.getHeiId();
+
+            response.getIia().addAll(iiaConverter.convertToIias(localHeiId, iiaList));
+        }
+
+
+        return javax.ws.rs.core.Response.ok(response).build();
+
     }
 
     private javax.ws.rs.core.Response iiaGet(List<String> iiaIdList) {
