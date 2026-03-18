@@ -388,6 +388,7 @@ public class IiaResource {
     @Path("stats_json")
     @Produces(MediaType.APPLICATION_JSON)
     public javax.ws.rs.core.Response iiaGetStatsJson() {
+        LOG.fine("GET: stats_json");
         IiasStatsResponse response = new IiasStatsResponse();
 
         List<Iia> nonApprovedIias = iiasEjb.findAllNoneApproved();
