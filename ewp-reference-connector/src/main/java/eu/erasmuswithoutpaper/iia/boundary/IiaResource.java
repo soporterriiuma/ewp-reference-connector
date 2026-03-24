@@ -20,10 +20,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.iias.cnr.ObjectFactory;
 import eu.erasmuswithoutpaper.api.iias.endpoints.IiasGetResponse;
@@ -41,6 +44,7 @@ import eu.erasmuswithoutpaper.iia.entity.CooperationCondition;
 import eu.erasmuswithoutpaper.iia.entity.Iia;
 import eu.erasmuswithoutpaper.notification.entity.Notification;
 import eu.erasmuswithoutpaper.notification.entity.NotificationTypes;
+import eu.erasmuswithoutpaper.omobility.las.dto.AlgoriaOmobilityLasIndexDto;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
 
 import java.util.logging.Level;
@@ -200,6 +204,80 @@ public class IiaResource {
     }
 
     @GET
+    @Path("index_algoria")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response indexAlgoriaPost(@FormParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @FormParam("modified_since") List<String> modified_since) {
+        return iiaIndexAlgoria(receiving_academic_year_id, modified_since);
+    }
+
+    private javax.ws.rs.core.Response iiaIndexAlgoria(List<String> receiving_academic_year_id, List<String> modified_since) {
+
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
+        String senderHeiId = heisCoveredByCertificate.iterator().next();
+
+        if (modified_since != null && modified_since.size() > 1) {
+            throw new EwpWebApplicationException("Not allow more than one value of modified_since", Response.Status.BAD_REQUEST);
+        }
+
+        //receiving_academic_year_id
+        if (receiving_academic_year_id != null) {
+            boolean match = true;
+            Iterator<String> iterator = receiving_academic_year_id.iterator();
+            while (iterator.hasNext() && match) {
+                String yearId = (String) iterator.next();
+
+                if (!yearId.matches("\\d{4}\\/\\d{4}")) {
+                    match = false;
+                }
+            }
+
+            if (!match) {
+                throw new EwpWebApplicationException("receiving_academic_year_id is not in the correct format", Response.Status.BAD_REQUEST);
+            }
+        }
+
+        IiasIndexResponse response = new IiasIndexResponse();
+        String url = properties.getAlgoriaIiasUrl(senderHeiId);
+        String token = properties.getAlgoriaAuthotizationToken();
+
+        WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
+
+        if(receiving_academic_year_id != null) {
+            target = target.queryParam("receiving_academic_year", receiving_academic_year_id);
+        }
+        if (modified_since != null) {
+            target = target.queryParam("student_id", modified_since);
+        }
+
+        Response algoriaResponse = target.request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
+
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
+        } catch (Exception e) {
+            LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria response parse error: " + e.getMessage());
+        }
+
+        return javax.ws.rs.core.Response.ok(response).build();
+    }
+
+    @GET
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
@@ -249,7 +327,7 @@ public class IiaResource {
         return iiaGet(iiaIdList);
     }
 
-    @GET
+    /*@GET
     @Path("index_json")
     @Produces(MediaType.APPLICATION_JSON)
     public javax.ws.rs.core.Response indexGetJson(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @QueryParam("modified_since") List<String> modified_since, @QueryParam("sender_hei_id") String senderHeiId) {
@@ -423,7 +501,7 @@ public class IiaResource {
         response.setIiaBothApproved(BigInteger.valueOf(approvedIias.size()));
 
         return Response.ok(response).build();
-    }
+    }*/
 
     private javax.ws.rs.core.Response iiaGet(List<String> iiaIdList) {
         IiasGetResponse response = new IiasGetResponse();

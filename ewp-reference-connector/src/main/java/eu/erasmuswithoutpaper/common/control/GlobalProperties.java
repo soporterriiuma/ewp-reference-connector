@@ -42,6 +42,7 @@ public class GlobalProperties {
     String defaultAlgoriaTerminateURL = baseUrl + "/ewp_terminated_agreement_notifications/";
     String defaultAlgoriaCRLIST = baseUrl + "/ewp_learning_oportunities/";
     String defaultAlgoriaACURL = baseUrl + "/courses/";
+    String defaultAlgoriaIiasLasUrl = baseUrl + "/ewp_iias/";
     String defaultAlgoriaOmobilityLasUrl = baseUrl + "/ewp_omobilities_las/";
     String defaultAlgoriaImobilityLasNotifyUrl = baseUrl + "/ewp_imobilities_las/";
     String defaultAlgoriaAuthorizationToken = "Token 19714bb5b0418965250b3c4ca1403acef8b1dd67";
@@ -268,6 +269,19 @@ public class GlobalProperties {
     
     public String getAlgoriaAuthotizationToken() {
         return defaultAlgoriaAuthorizationToken;
+    }
+
+    public String getAlgoriaIiasUrl(String heiId) {
+        String base = defaultAlgoriaIiasLasUrl;
+        try {
+            base = configEJB.getValue("algoria.iias.url", defaultAlgoriaIiasLasUrl);
+        } catch (Exception e) {
+            base = defaultAlgoriaIiasLasUrl;
+        }
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + heiId + "/";
     }
 
     public String getAlgoriaOmobilityLasStatsUrl() {

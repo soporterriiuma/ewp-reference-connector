@@ -93,6 +93,51 @@ public class IiaApprovalResource {
         return iiaApprovalGet(iiaIdList);
     }
 
+    @GET
+    @Path("get_json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public javax.ws.rs.core.Response iiasApprovalJson(@QueryParam("iia_id") List<String> iiaIdList, @QueryParam("hei_id") String notifierHeiId) {
+        if (iiaIdList.size() > properties.getMaxIiaIds()) {
+            throw new EwpWebApplicationException("Max number of IIA APPROVAL id's has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+        if (iiaIdList.isEmpty()) {
+            throw new EwpWebApplicationException("iia_id required.", Response.Status.BAD_REQUEST);
+        }
+
+        IiasApprovalResponse response = new IiasApprovalResponse();
+
+        LOG.fine("iiaIdList: " + iiaIdList);
+
+        iiaIdList.forEach(iiaId -> {
+            List<Iia> iiaApproval = iiasEJB.getByPartnerId(notifierHeiId, iiaId);
+            if (iiaApproval != null && !iiaApproval.isEmpty()) {
+                LOG.fine("iiaApproval: " + iiaApproval.size());
+                Iia iia = iiaApproval.get(0);
+                IiasApprovalResponse.Approval approval = new IiasApprovalResponse.Approval();
+                approval.setIiaId(iiaId);
+                approval.setIiaHash(iia.getHashPartner());
+
+                List<IiaApproval> iiaApprovals = iiasEJB.findIiaApproval(iiasEJB.getHeiId(), iia.getId());
+                if (!iiaApprovals.isEmpty()) {
+                    LOG.fine("iiaApprovals: " + iiaApprovals.size());
+                    response.getApproval().add(approval);
+                } else {
+                    Iia approvedIia = iiasEJB.findApprovedVersion(iia.getId());
+                    if (approvedIia != null) {
+                        approval = new IiasApprovalResponse.Approval();
+                        approval.setIiaId(iiaId);
+                        approval.setIiaHash(approvedIia.getHashPartner());
+
+                        response.getApproval().add(approval);
+                    }
+                }
+            }
+        });
+
+        return javax.ws.rs.core.Response.ok(response).build();
+    }
+
     @POST
     @Path("cnr")
     @EwpAuthenticate
