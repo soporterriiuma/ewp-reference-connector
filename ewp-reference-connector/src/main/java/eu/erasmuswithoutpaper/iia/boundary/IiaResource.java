@@ -26,7 +26,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.iias.cnr.ObjectFactory;
 import eu.erasmuswithoutpaper.api.iias.endpoints.IiasGetResponse;
@@ -44,7 +43,6 @@ import eu.erasmuswithoutpaper.iia.entity.CooperationCondition;
 import eu.erasmuswithoutpaper.iia.entity.Iia;
 import eu.erasmuswithoutpaper.notification.entity.Notification;
 import eu.erasmuswithoutpaper.notification.entity.NotificationTypes;
-import eu.erasmuswithoutpaper.omobility.las.dto.AlgoriaOmobilityLasIndexDto;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
 
 import java.util.logging.Level;
@@ -327,6 +325,60 @@ public class IiaResource {
         return iiaGet(iiaIdList);
     }
 
+    @GET
+    @Path("get_algoria")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response indexAlgoriaPost(@QueryParam("iia_id") List<String> iiaIdList) {
+        return iiaGetAlgoria(iiaIdList);
+    }
+
+    private javax.ws.rs.core.Response iiaGetAlgoria(List<String> iiaIdList) {
+
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
+        if (iiaIdList.size() > properties.getMaxIiaIds()) {
+            throw new EwpWebApplicationException("Max number of IIA ids has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+        if (iiaIdList.isEmpty()) {
+            throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
+        }
+
+        String senderHeiId = heisCoveredByCertificate.iterator().next();
+
+        IiasGetResponse response = new IiasGetResponse();
+        String url = properties.getAlgoriaIiaUrl(senderHeiId, iiaIdList.get(0));
+        String token = properties.getAlgoriaAuthotizationToken();
+
+        WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
+
+        Response algoriaResponse = target.request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
+
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
+        } catch (Exception e) {
+            LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria response parse error: " + e.getMessage());
+        }
+
+        return javax.ws.rs.core.Response.ok(response).build();
+    }
+
     /*@GET
     @Path("index_json")
     @Produces(MediaType.APPLICATION_JSON)
@@ -579,6 +631,46 @@ public class IiaResource {
         response.setIiaBothApproved(BigInteger.valueOf(approvedIias.size()));
 
         return Response.ok(response).build();
+    }
+
+    @GET
+    @Path("stats_algoria")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response iiaStatsAlgoria() {
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
+
+        IiasStatsResponse response = new IiasStatsResponse();
+        String url = properties.getAlgoriaIiaStatsUrl();
+        String token = properties.getAlgoriaAuthotizationToken();
+
+        WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
+
+        Response algoriaResponse = target.request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
+
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
+        } catch (Exception e) {
+            LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria response parse error: " + e.getMessage());
+        }
+
+        return javax.ws.rs.core.Response.ok(response).build();
     }
 
 

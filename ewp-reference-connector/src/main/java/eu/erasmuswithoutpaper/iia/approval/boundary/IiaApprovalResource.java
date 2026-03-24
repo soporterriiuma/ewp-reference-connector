@@ -2,10 +2,8 @@ package eu.erasmuswithoutpaper.iia.approval.boundary;
 
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -15,10 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -26,6 +21,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,20 +31,16 @@ import eu.erasmuswithoutpaper.iia.common.IiaTaskEnum;
 import eu.erasmuswithoutpaper.iia.control.IiasEJB;
 import eu.erasmuswithoutpaper.iia.entity.CooperationCondition;
 import eu.erasmuswithoutpaper.iia.entity.Iia;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.iias.approval.IiasApprovalResponse;
 import eu.erasmuswithoutpaper.api.iias.approval.cnr.ObjectFactory;
 import eu.erasmuswithoutpaper.common.control.GlobalProperties;
 import eu.erasmuswithoutpaper.common.control.RegistryClient;
-import eu.erasmuswithoutpaper.common.control.RestClient;
 import eu.erasmuswithoutpaper.error.control.EwpWebApplicationException;
 import eu.erasmuswithoutpaper.iia.approval.control.IiaApprovalConverter;
 import eu.erasmuswithoutpaper.iia.approval.entity.IiaApproval;
 import eu.erasmuswithoutpaper.iia.common.IiaTaskService;
-import eu.erasmuswithoutpaper.imobility.control.IncomingMobilityConverter;
 import eu.erasmuswithoutpaper.notification.entity.Notification;
 import eu.erasmuswithoutpaper.notification.entity.NotificationTypes;
 import eu.erasmuswithoutpaper.organization.entity.Institution;
@@ -94,49 +87,59 @@ public class IiaApprovalResource {
     }
 
     @GET
-    @Path("get_json")
-    @Produces(MediaType.APPLICATION_JSON)
-    public javax.ws.rs.core.Response iiasApprovalJson(@QueryParam("iia_id") List<String> iiaIdList, @QueryParam("hei_id") String notifierHeiId) {
+    @Path("get_algoria")
+    @EwpAuthenticate
+    @Produces(MediaType.APPLICATION_XML)
+    public javax.ws.rs.core.Response iiasApprovalGetAlgoria(@QueryParam("iia_id") List<String> iiaIdList) {
+        return iiaApprovalGetAlgoria(iiaIdList);
+    }
+
+    private javax.ws.rs.core.Response iiaApprovalGetAlgoria(List<String> iiaIdList) {
+
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
         if (iiaIdList.size() > properties.getMaxIiaIds()) {
-            throw new EwpWebApplicationException("Max number of IIA APPROVAL id's has exceeded.", Response.Status.BAD_REQUEST);
+            throw new EwpWebApplicationException("Max number of IIA ids has exceeded.", Response.Status.BAD_REQUEST);
         }
 
         if (iiaIdList.isEmpty()) {
-            throw new EwpWebApplicationException("iia_id required.", Response.Status.BAD_REQUEST);
+            throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
         }
 
+        String senderHeiId = heisCoveredByCertificate.iterator().next();
+
         IiasApprovalResponse response = new IiasApprovalResponse();
+        String url = properties.getAlgoriaIiaApprovalUrl(senderHeiId, iiaIdList.get(0));
+        String token = properties.getAlgoriaAuthotizationToken();
 
-        LOG.fine("iiaIdList: " + iiaIdList);
+        WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
 
-        iiaIdList.forEach(iiaId -> {
-            List<Iia> iiaApproval = iiasEJB.getByPartnerId(notifierHeiId, iiaId);
-            if (iiaApproval != null && !iiaApproval.isEmpty()) {
-                LOG.fine("iiaApproval: " + iiaApproval.size());
-                Iia iia = iiaApproval.get(0);
-                IiasApprovalResponse.Approval approval = new IiasApprovalResponse.Approval();
-                approval.setIiaId(iiaId);
-                approval.setIiaHash(iia.getHashPartner());
+        Response algoriaResponse = target.request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
 
-                List<IiaApproval> iiaApprovals = iiasEJB.findIiaApproval(iiasEJB.getHeiId(), iia.getId());
-                if (!iiaApprovals.isEmpty()) {
-                    LOG.fine("iiaApprovals: " + iiaApprovals.size());
-                    response.getApproval().add(approval);
-                } else {
-                    Iia approvedIia = iiasEJB.findApprovedVersion(iia.getId());
-                    if (approvedIia != null) {
-                        approval = new IiasApprovalResponse.Approval();
-                        approval.setIiaId(iiaId);
-                        approval.setIiaHash(approvedIia.getHashPartner());
-
-                        response.getApproval().add(approval);
-                    }
-                }
-            }
-        });
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
+        } catch (Exception e) {
+            LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria response parse error: " + e.getMessage());
+        }
 
         return javax.ws.rs.core.Response.ok(response).build();
     }
+
 
     @POST
     @Path("cnr")
@@ -197,6 +200,52 @@ public class IiaApprovalResource {
 
         //Put the task in the queue
         IiaTaskService.addTask(callableTask);
+    }
+
+    @GET
+    @Path("get_json")
+    @Produces(MediaType.APPLICATION_JSON)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response iiasApprovalJson(@QueryParam("iia_id") List<String> iiaIdList, @QueryParam("hei_id") String notifierHeiId) {
+        if (iiaIdList.size() > properties.getMaxIiaIds()) {
+            throw new EwpWebApplicationException("Max number of IIA APPROVAL id's has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+        if (iiaIdList.isEmpty()) {
+            throw new EwpWebApplicationException("iia_id required.", Response.Status.BAD_REQUEST);
+        }
+
+        IiasApprovalResponse response = new IiasApprovalResponse();
+
+        LOG.fine("iiaIdList: " + iiaIdList);
+
+        iiaIdList.forEach(iiaId -> {
+            List<Iia> iiaApproval = iiasEJB.getByPartnerId(notifierHeiId, iiaId);
+            if (iiaApproval != null && !iiaApproval.isEmpty()) {
+                LOG.fine("iiaApproval: " + iiaApproval.size());
+                Iia iia = iiaApproval.get(0);
+                IiasApprovalResponse.Approval approval = new IiasApprovalResponse.Approval();
+                approval.setIiaId(iiaId);
+                approval.setIiaHash(iia.getHashPartner());
+
+                List<IiaApproval> iiaApprovals = iiasEJB.findIiaApproval(iiasEJB.getHeiId(), iia.getId());
+                if (!iiaApprovals.isEmpty()) {
+                    LOG.fine("iiaApprovals: " + iiaApprovals.size());
+                    response.getApproval().add(approval);
+                } else {
+                    Iia approvedIia = iiasEJB.findApprovedVersion(iia.getId());
+                    if (approvedIia != null) {
+                        approval = new IiasApprovalResponse.Approval();
+                        approval.setIiaId(iiaId);
+                        approval.setIiaHash(approvedIia.getHashPartner());
+
+                        response.getApproval().add(approval);
+                    }
+                }
+            }
+        });
+
+        return javax.ws.rs.core.Response.ok(response).build();
     }
 
     private javax.ws.rs.core.Response iiaApprovalGet(List<String> iiaIdList) {

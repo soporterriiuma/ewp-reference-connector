@@ -271,6 +271,19 @@ public class GlobalProperties {
         return defaultAlgoriaAuthorizationToken;
     }
 
+    public String getAlgoriaIiaStatsUrl() {
+        String base = defaultAlgoriaIiasLasUrl;
+        try {
+            base = configEJB.getValue("algoria.iias.url", defaultAlgoriaIiasLasUrl);
+        } catch (Exception e) {
+            base = defaultAlgoriaIiasLasUrl;
+        }
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + "stats/";
+    }
+
     public String getAlgoriaIiasUrl(String heiId) {
         String base = defaultAlgoriaIiasLasUrl;
         try {
@@ -282,6 +295,32 @@ public class GlobalProperties {
             base = base + "/";
         }
         return base + heiId + "/";
+    }
+
+    public String getAlgoriaIiaUrl(String heiId, String iiaId) {
+        String base = defaultAlgoriaIiasLasUrl;
+        try {
+            base = configEJB.getValue("algoria.iias.url", defaultAlgoriaIiasLasUrl);
+        } catch (Exception e) {
+            base = defaultAlgoriaIiasLasUrl;
+        }
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + heiId + "/" + iiaId + "/";
+    }
+
+    public String getAlgoriaIiaApprovalUrl(String heiId, String iiaId) {
+        String base = defaultAlgoriaIiasLasUrl;
+        try {
+            base = configEJB.getValue("algoria.iias.url", defaultAlgoriaIiasLasUrl);
+        } catch (Exception e) {
+            base = defaultAlgoriaIiasLasUrl;
+        }
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + heiId + "/" + iiaId + "/approval/";
     }
 
     public String getAlgoriaOmobilityLasStatsUrl() {
