@@ -796,6 +796,8 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
+        String localHeiId = learningAgreementEJB.getHeiId();
+
         urls.forEach((key, value) -> LOG.fine("CNR: url: " + key + " -> " + value));
 
         for (Map.Entry<String, String> entry : urls.entrySet()) {
@@ -806,7 +808,7 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
             clientRequest.setHttpsec(true);
 
             Map<String, List<String>> paramsMap = new HashMap<>();
-            paramsMap.put("sending_hei_id", Collections.singletonList(sendingHeiId));
+            paramsMap.put("sending_hei_id", Collections.singletonList(localHeiId));
             paramsMap.put("omobility_id", Collections.singletonList(id));
             ParamsClass paramsClass = new ParamsClass();
             paramsClass.setUnknownFields(paramsMap);
