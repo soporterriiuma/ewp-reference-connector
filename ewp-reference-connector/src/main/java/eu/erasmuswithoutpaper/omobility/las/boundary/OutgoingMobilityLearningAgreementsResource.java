@@ -725,6 +725,23 @@ public class OutgoingMobilityLearningAgreementsResource {
             throw new EwpWebApplicationException("Max number of omobility learning agreements id's has exceeded.", Response.Status.BAD_REQUEST);
         }
 
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
+        String recivingHeiId = heisCoveredByCertificate.iterator().next();
+        if (!recivingHeiId.equals(sendingHeiId)) {
+            throw new EwpWebApplicationException("The sending HEI ID must be the same as the receiving HEI ID covered by the certificate.", Response.Status.FORBIDDEN);
+        }
+
+
         LOG.fine("mobilityIdList: " + mobilityIdList.toString());
 
         OmobilityLasGetResponse response = new OmobilityLasGetResponse();
@@ -733,7 +750,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         for (String mobilityId : mobilityIdList) {
-            String url = properties.getAlgoriaOmobilityByIDLasUrl(sendingHeiId, mobilityId);
+            String url = properties.getAlgoriaOmobilityByIDLasUrl(recivingHeiId, mobilityId);
             LOG.fine("Algoria GET URL: " + url);
             WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
             Response algoriaResponse = target.request().header("Authorization", token).get();
