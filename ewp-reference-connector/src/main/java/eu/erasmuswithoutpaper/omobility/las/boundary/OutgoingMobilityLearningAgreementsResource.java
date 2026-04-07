@@ -137,10 +137,10 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Path("index_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
-    public javax.ws.rs.core.Response indexPostTest(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
-                                               @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces, @QueryParam("receiving_hei_id") String recivingHeiId) {
+    public javax.ws.rs.core.Response indexPostTest(@QueryParam("receiving_hei_id") List<String> receivingHeiIdList, @QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
+                                               @QueryParam("global_id") List<String> globalIds, @QueryParam("mobility_type") List<String> mobilityTypes, @QueryParam("modified_since") List<String> modifiedSinces, @QueryParam("receiving_hei_id") String recivingHeiId) {
         LOG.info("---- START /omobilities/las/index_test ----");
-        return omobilityLasIndexAlgoria(recivingHeiId, sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+        return omobilityLasIndexAlgoria(recivingHeiId, Collections.singletonList("uma.es"), receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
     }
 
     /*@GET
