@@ -281,6 +281,19 @@ public class OutgoingMobilityLearningAgreementsResource {
             throw new EwpWebApplicationException("Mising required parameter, approve-proposal-v1 and comment-proposal-v1 both of them can not be missing", Response.Status.BAD_REQUEST);
         }
 
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            return javax.ws.rs.core.Response.ok(new OmobilityLasIndexResponse()).build();
+        }
+
+        String recivingHeiId = heisCoveredByCertificate.iterator().next();
+
         String omobilityId = null;
         String action = null;
         if (request.getApproveProposalV1() != null) {
@@ -295,7 +308,7 @@ public class OutgoingMobilityLearningAgreementsResource {
             throw new EwpWebApplicationException("Mising required parameter, omobility-id is required", Response.Status.BAD_REQUEST);
         }
 
-        String url = properties.getAlgoriaOmobilityByIDLasUrl(request.getSendingHeiId(), omobilityId) + action + "/";
+        String url = properties.getAlgoriaOmobilityByIDLasUrl(recivingHeiId, omobilityId) + action + "/";
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -1058,7 +1071,7 @@ public class OutgoingMobilityLearningAgreementsResource {
         String mobilityType;
         String modifiedSince;
 
-        /*Collection<String> heisCoveredByCertificate;
+        Collection<String> heisCoveredByCertificate;
         if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
             heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
         } else {
@@ -1067,17 +1080,18 @@ public class OutgoingMobilityLearningAgreementsResource {
 
         if (heisCoveredByCertificate.isEmpty()) {
             return javax.ws.rs.core.Response.ok(new OmobilityLasIndexResponse()).build();
-        }*/
+        }
+
+        String recivingHeiId = heisCoveredByCertificate.iterator().next();
 
         if (sendingHeiIds.size() != 1) {
             throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
         }
-        String sendingHeiId = sendingHeiIds.get(0);
 
-        Map<String, String> urls = registryClient.getOmobilityLasHeiUrls(sendingHeiId);
+        /*Map<String, String> urls = registryClient.getOmobilityLasHeiUrls(recivingHeiId);
         if (urls == null || urls.isEmpty()) {
-            throw new EwpWebApplicationException("Unknown heiId: " + sendingHeiId, Response.Status.BAD_REQUEST);
-        }
+            throw new EwpWebApplicationException("Unknown heiId: " + recivingHeiId, Response.Status.BAD_REQUEST);
+        }*/
 
 
         String fistYear = null;
@@ -1145,7 +1159,7 @@ public class OutgoingMobilityLearningAgreementsResource {
 
         OmobilityLasIndexResponse response = new OmobilityLasIndexResponse();
 
-        String url = properties.getAlgoriaOmobilityLasUrl(sendingHeiId);
+        String url = properties.getAlgoriaOmobilityLasUrl(recivingHeiId);
         String token = properties.getAlgoriaAuthotizationToken();
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
