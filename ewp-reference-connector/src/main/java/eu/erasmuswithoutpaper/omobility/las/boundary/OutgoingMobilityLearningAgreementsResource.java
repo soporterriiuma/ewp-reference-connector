@@ -138,9 +138,9 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
     public javax.ws.rs.core.Response indexPostTest(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
-                                               @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces) {
+                                               @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces, @QueryParam("receiving_hei_id") String recivingHeiId) {
         LOG.info("---- START /omobilities/las/index_test ----");
-        return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+        return omobilityLasIndexAlgoria(recivingHeiId, sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
     }
 
     /*@GET
@@ -179,7 +179,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Path("get_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
-    public javax.ws.rs.core.Response omobilityGetPostTest(@QueryParam("omobility_id") List<String> mobilityIdList, @QueryParam("reciving_hei_id") String recivingHeiId) {
+    public javax.ws.rs.core.Response omobilityGetPostTest(@QueryParam("omobility_id") List<String> mobilityIdList, @QueryParam("receiving_hei_id") String recivingHeiId) {
         LOG.info("---- START /omobilities/las/get_test ----");
         return mobilityGetAlgoria(Collections.singletonList("uma.es"), mobilityIdList, recivingHeiId);
     }
@@ -1066,12 +1066,6 @@ public class OutgoingMobilityLearningAgreementsResource {
     }*/
 
     private javax.ws.rs.core.Response omobilityLasIndexAlgoria(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
-        LOG.info("omobilityLasIndexAlgoria: Starting index request with parameters: sendingHeiIds=" + sendingHeiIds);
-        String receiving_academic_year_id;
-        String globalId;
-        String mobilityType;
-        String modifiedSince;
-
         Collection<String> heisCoveredByCertificate;
         if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
             heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
@@ -1080,10 +1074,21 @@ public class OutgoingMobilityLearningAgreementsResource {
         }
 
         if (heisCoveredByCertificate.isEmpty()) {
-            return javax.ws.rs.core.Response.ok(new OmobilityLasIndexResponse()).build();
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
-        String recivingHeiId = heisCoveredByCertificate.iterator().next();
+        String receivingHeiId = heisCoveredByCertificate.iterator().next();
+
+        return omobilityLasIndexAlgoria(receivingHeiId, sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+    }
+
+
+    private javax.ws.rs.core.Response omobilityLasIndexAlgoria(String receivingHeiId, List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
+        LOG.info("omobilityLasIndexAlgoria: Starting index request with parameters: sendingHeiIds=" + sendingHeiIds);
+        String receiving_academic_year_id;
+        String globalId;
+        String mobilityType;
+        String modifiedSince;
 
         if (sendingHeiIds.size() != 1) {
             throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
@@ -1160,7 +1165,7 @@ public class OutgoingMobilityLearningAgreementsResource {
 
         OmobilityLasIndexResponse response = new OmobilityLasIndexResponse();
 
-        String url = properties.getAlgoriaOmobilityLasUrl(recivingHeiId);
+        String url = properties.getAlgoriaOmobilityLasUrl(receivingHeiId);
         String token = properties.getAlgoriaAuthotizationToken();
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
