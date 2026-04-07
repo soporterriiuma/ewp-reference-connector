@@ -179,9 +179,9 @@ public class OutgoingMobilityLearningAgreementsResource {
     @Path("get_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
-    public javax.ws.rs.core.Response omobilityGetPostTest(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
+    public javax.ws.rs.core.Response omobilityGetPostTest(@QueryParam("omobility_id") List<String> mobilityIdList, @QueryParam("reciving_hei_id") String recivingHeiId) {
         LOG.info("---- START /omobilities/las/get_test ----");
-        return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
+        return mobilityGetAlgoria(Collections.singletonList("uma.es"), mobilityIdList, recivingHeiId);
     }
 
     /*@POST
