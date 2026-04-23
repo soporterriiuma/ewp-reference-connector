@@ -1065,6 +1065,64 @@ public class OutgoingMobilityLearningAgreementsResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }*/
 
+    @GET
+    @Path("cnr/stats")
+    @Produces(MediaType.APPLICATION_XML)
+    //@EwpAuthenticate
+    public javax.ws.rs.core.Response omobilityGetStatsCnrAlgoria() {
+        LOG.info("---- START /omobilities/las/cnr/stats ----");
+
+        String url = properties.getAlgoriaOmobilityLasStatsCnrUrl();
+        String token = properties.getAlgoriaAuthotizationToken();
+        LOG.info("Algoria stats outbound method=GET");
+        LOG.info("Algoria stats outbound url=" + url);
+        LOG.info("Algoria stats outbound header Authorization=" + token);
+
+        Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            LOG.info("Algoria stats response status=" + algoriaResponse.getStatus());
+            LOG.info("Algoria stats response headers=" + algoriaResponse.getStringHeaders());
+            LOG.info("Algoria stats raw body:\n" + rawBody);
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                throw new EwpWebApplicationException("Stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+            JsonNode root = mapper.readTree(rawBody);
+            JsonNode statsNode = root.get("academicYearLaStats");
+            if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
+                ((ObjectNode) root).set("academicYearLaStats", statsNode.get(0));
+                statsNode = root.get("academicYearLaStats");
+            }
+            if (statsNode != null && statsNode.isArray()) {
+                for (JsonNode statNode : statsNode) {
+                    if (statNode.isObject()) {
+                        JsonNode yearNode = statNode.get("receivingAcademicYearId");
+                        if (yearNode != null && yearNode.isTextual()) {
+                            ((ObjectNode) statNode).put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                        }
+                    }
+                }
+            }
+
+            LasIncomingStatsResponse response = mapper.convertValue(root, LasIncomingStatsResponse.class);
+            LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
+            return javax.ws.rs.core.Response.ok(response).build();
+        } catch (EwpWebApplicationException e) {
+            LOG.warning("Algoria stats failed with known error: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            LOG.warning("Algoria stats response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria stats parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("Stats request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
+        }
+    }
+
     private javax.ws.rs.core.Response omobilityLasIndexAlgoria(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
         Collection<String> heisCoveredByCertificate;
         if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {

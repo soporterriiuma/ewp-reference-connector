@@ -337,16 +337,16 @@ public class GlobalProperties {
     }
 
     public String getAlgoriaOmobilityLasStatsCnrUrl() {
-        String base = defaultAlgoriaOmobilityLasUrl;
+        String base = defaultAlgoriaImobilityLasNotifyUrl;
         try {
-            base = configEJB.getValue("algoria.omobility.las.url", defaultAlgoriaOmobilityLasUrl);
+            base = configEJB.getValue("algoria.omobility.las.url", defaultAlgoriaImobilityLasNotifyUrl);
         } catch (Exception e) {
-            base = defaultAlgoriaOmobilityLasUrl;
+            base = defaultAlgoriaImobilityLasNotifyUrl;
         }
         if (!base.endsWith("/")) {
             base = base + "/";
         }
-        return base + "cnr/stats/";
+        return base + "stats/";
     }
 
     public String getAlgoriaOmobilityLasUrl(String heiId) {
