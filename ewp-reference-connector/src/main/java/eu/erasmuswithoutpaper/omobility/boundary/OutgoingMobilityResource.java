@@ -289,7 +289,7 @@ public class OutgoingMobilityResource {
 
                         BigInteger someVersionApproved = readBigInteger(statNode.get("laIncomingSomeVersionApproved"));
                         if (someVersionApproved != null) {
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toByteArray());
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
                         }
                     }
                 }
@@ -606,7 +606,7 @@ public class OutgoingMobilityResource {
 
                         BigInteger someVersionApproved = readBigInteger(statNode.get("laIncomingSomeVersionApproved"));
                         if (someVersionApproved != null) {
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toByteArray());
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
                         }
                     }
                 }

@@ -436,11 +436,9 @@ public class OutgoingMobilityLearningAgreementsResource {
                             statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
                         }
 
-                        BigInteger notModifiedAfterApproval = readBigInteger(statNode.get("laIncomingNotModifiedAfterApproval"));
-                        BigInteger modifiedAfterApproval = readBigInteger(statNode.get("laIncomingModifiedAfterApproval"));
-                        if (notModifiedAfterApproval != null || modifiedAfterApproval != null) {
-                            BigInteger someVersionApproved = defaultBigInteger(notModifiedAfterApproval).add(defaultBigInteger(modifiedAfterApproval));
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toByteArray());
+                        BigInteger someVersionApproved = readBigInteger(statNode.get("laIncomingSomeVersionApproved"));
+                        if (someVersionApproved != null) {
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
                         }
                     }
                 }
@@ -568,7 +566,7 @@ public class OutgoingMobilityLearningAgreementsResource {
                         BigInteger modifiedAfterApproval = readBigInteger(statNode.get("laIncomingModifiedAfterApproval"));
                         if (notModifiedAfterApproval != null || modifiedAfterApproval != null) {
                             BigInteger someVersionApproved = defaultBigInteger(notModifiedAfterApproval).add(defaultBigInteger(modifiedAfterApproval));
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved);
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
                         }
                     }
                 }
@@ -1122,11 +1120,9 @@ public class OutgoingMobilityLearningAgreementsResource {
                             statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
                         }
 
-                        BigInteger notModifiedAfterApproval = readBigInteger(statNode.get("laIncomingNotModifiedAfterApproval"));
-                        BigInteger modifiedAfterApproval = readBigInteger(statNode.get("laIncomingModifiedAfterApproval"));
-                        if (notModifiedAfterApproval != null || modifiedAfterApproval != null) {
-                            BigInteger someVersionApproved = defaultBigInteger(notModifiedAfterApproval).add(defaultBigInteger(modifiedAfterApproval));
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toByteArray());
+                        BigInteger someVersionApproved = readBigInteger(statNode.get("laIncomingSomeVersionApproved"));
+                        if (someVersionApproved != null) {
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
                         }
                     }
                 }
