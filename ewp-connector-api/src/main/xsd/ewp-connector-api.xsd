@@ -116,26 +116,44 @@
 
 
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/v2.0.0/endpoints/index-response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v2/endpoints/index-response.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/stable-v3/endpoints/index-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v3/endpoints/index-response.xsd"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/v2.0.0/endpoints/get-response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v2/endpoints/get-response.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/stable-v3/endpoints/get-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v3/endpoints/get-response.xsd"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/v2.0.0/manifest-entry.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v2/manifest-entry.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/stable-v3/endpoints/update-request.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v3/endpoints/update-request.xsd"
+    />
+    <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/stable-v3/endpoints/update-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v3/endpoints/update-response.xsd"
+    />
+    <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobilities/stable-v3/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobilities/blob/stable-v3/manifest-entry.xsd"
     />
 
 
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/v0.4.0/response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/tree/stable-v1"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/stable-v2/response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/tree/stable-v2"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/v0.4.0/manifest-entry.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/blob/stable-v1/manifest-entry.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/stable-v2/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/blob/stable-v2/manifest-entry.xsd"
+    />
+
+
+    <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-stats/stable-v1/response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-stats/tree/stable-v1"
+    />
+    <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-stats/stable-v1/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-omobility-stats/blob/stable-v1/manifest-entry.xsd"
     />
 
 

@@ -430,9 +430,17 @@ public class OutgoingMobilityLearningAgreementsResource {
             if (statsNode != null && statsNode.isArray()) {
                 for (JsonNode statNode : statsNode) {
                     if (statNode.isObject()) {
+                        ObjectNode statObject = (ObjectNode) statNode;
                         JsonNode yearNode = statNode.get("receivingAcademicYearId");
                         if (yearNode != null && yearNode.isTextual()) {
-                            ((ObjectNode) statNode).put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                            statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                        }
+
+                        BigInteger notModifiedAfterApproval = readBigInteger(statNode.get("laIncomingNotModifiedAfterApproval"));
+                        BigInteger modifiedAfterApproval = readBigInteger(statNode.get("laIncomingModifiedAfterApproval"));
+                        if (notModifiedAfterApproval != null || modifiedAfterApproval != null) {
+                            BigInteger someVersionApproved = defaultBigInteger(notModifiedAfterApproval).add(defaultBigInteger(modifiedAfterApproval));
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toByteArray());
                         }
                     }
                 }
@@ -550,9 +558,17 @@ public class OutgoingMobilityLearningAgreementsResource {
             if (statsNode != null && statsNode.isArray()) {
                 for (JsonNode statNode : statsNode) {
                     if (statNode.isObject()) {
+                        ObjectNode statObject = (ObjectNode) statNode;
                         JsonNode yearNode = statNode.get("receivingAcademicYearId");
                         if (yearNode != null && yearNode.isTextual()) {
-                            ((ObjectNode) statNode).put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                            statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                        }
+
+                        BigInteger notModifiedAfterApproval = readBigInteger(statNode.get("laIncomingNotModifiedAfterApproval"));
+                        BigInteger modifiedAfterApproval = readBigInteger(statNode.get("laIncomingModifiedAfterApproval"));
+                        if (notModifiedAfterApproval != null || modifiedAfterApproval != null) {
+                            BigInteger someVersionApproved = defaultBigInteger(notModifiedAfterApproval).add(defaultBigInteger(modifiedAfterApproval));
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved);
                         }
                     }
                 }
@@ -1100,9 +1116,17 @@ public class OutgoingMobilityLearningAgreementsResource {
             if (statsNode != null && statsNode.isArray()) {
                 for (JsonNode statNode : statsNode) {
                     if (statNode.isObject()) {
+                        ObjectNode statObject = (ObjectNode) statNode;
                         JsonNode yearNode = statNode.get("receivingAcademicYearId");
                         if (yearNode != null && yearNode.isTextual()) {
-                            ((ObjectNode) statNode).put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                            statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                        }
+
+                        BigInteger notModifiedAfterApproval = readBigInteger(statNode.get("laIncomingNotModifiedAfterApproval"));
+                        BigInteger modifiedAfterApproval = readBigInteger(statNode.get("laIncomingModifiedAfterApproval"));
+                        if (notModifiedAfterApproval != null || modifiedAfterApproval != null) {
+                            BigInteger someVersionApproved = defaultBigInteger(notModifiedAfterApproval).add(defaultBigInteger(modifiedAfterApproval));
+                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toByteArray());
                         }
                     }
                 }
@@ -1121,6 +1145,33 @@ public class OutgoingMobilityLearningAgreementsResource {
         } finally {
             algoriaResponse.close();
         }
+    }
+
+    private static BigInteger readBigInteger(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (node.isIntegralNumber()) {
+            return node.bigIntegerValue();
+        }
+        if (node.isTextual()) {
+            String value = node.asText();
+            if (value != null) {
+                value = value.trim();
+            }
+            if (value != null && !value.isEmpty()) {
+                try {
+                    return new BigInteger(value);
+                } catch (NumberFormatException ignored) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static BigInteger defaultBigInteger(BigInteger value) {
+        return value != null ? value : BigInteger.ZERO;
     }
 
     private javax.ws.rs.core.Response omobilityLasIndexAlgoria(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {

@@ -16,8 +16,8 @@ import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.omobilities.endpoints.MobilityActivityType;
 import eu.erasmuswithoutpaper.api.omobilities.endpoints.MobilityStatus;
 import eu.erasmuswithoutpaper.api.omobilities.endpoints.StudentMobility;
-import eu.erasmuswithoutpaper.api.omobilities.endpoints.StudentMobility.AdditionalRequirement;
-import eu.erasmuswithoutpaper.api.omobilities.endpoints.StudentMobility.NomineeLanguageSkill;
+//import eu.erasmuswithoutpaper.api.omobilities.endpoints.StudentMobility.AdditionalRequirement;
+//import eu.erasmuswithoutpaper.api.omobilities.endpoints.StudentMobility.NomineeLanguageSkill;
 import eu.erasmuswithoutpaper.common.control.ConverterHelper;
 import eu.erasmuswithoutpaper.omobility.entity.AdditionalRequirements;
 import eu.erasmuswithoutpaper.omobility.entity.LanguageSkill;
@@ -28,7 +28,7 @@ import eu.erasmuswithoutpaper.organization.entity.MobilityParticipant;
 import eu.erasmuswithoutpaper.organization.entity.Person;
 
 public class OutgoingMobilityConverter {
-    private static final Logger logger = LoggerFactory.getLogger(OutgoingMobilityConverter.class);
+    /*private static final Logger logger = LoggerFactory.getLogger(OutgoingMobilityConverter.class);
     
     @PersistenceContext(unitName = "connector")
     EntityManager em;
@@ -158,5 +158,5 @@ public class OutgoingMobilityConverter {
             mobilityStudent.setStreetAddress(ConverterHelper.convertToFlexibleAddress(student.getContactDetails().getStreetAddress()));
         }
         return mobilityStudent;
-    }
+    }*/
 }
