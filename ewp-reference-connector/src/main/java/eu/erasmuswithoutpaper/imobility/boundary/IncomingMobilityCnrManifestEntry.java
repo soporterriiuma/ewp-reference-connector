@@ -29,11 +29,7 @@ public class IncomingMobilityCnrManifestEntry implements ManifestEntryStrategy {
         HttpSecurityOptions httpSecurityOptions = new HttpSecurityOptions();
         
         HttpSecurityOptions.ClientAuthMethods clientAuthMethods = new HttpSecurityOptions.ClientAuthMethods();
-        */
-        /*CliauthTlscert cliauthtlscert = new CliauthTlscert();
-        cliauthtlscert.setAllowsSelfSigned(true);
-        clientAuthMethods.getAny().add(cliauthtlscert);*/
-        /*
+
         clientAuthMethods.getAny().add(new CliauthHttpsig());
         
         httpSecurityOptions.setClientAuthMethods(clientAuthMethods);
@@ -44,8 +40,8 @@ public class IncomingMobilityCnrManifestEntry implements ManifestEntryStrategy {
         serverAuthMethods.getAny().add(new SrvauthHttpsig());
         
         httpSecurityOptions.setServerAuthMethods(serverAuthMethods);
-        imobilityCnr.setHttpSecurity(httpSecurityOptions);
-*/
+        imobilityCnr.setHttpSecurity(httpSecurityOptions);*/
+
         return imobilityCnr;
     }
 }

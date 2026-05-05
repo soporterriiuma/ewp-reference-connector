@@ -1,197 +1,199 @@
 package eu.erasmuswithoutpaper.imobility.boundary;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
-import eu.erasmuswithoutpaper.api.imobilities.cnr.ObjectFactory;
 import eu.erasmuswithoutpaper.api.imobilities.endpoints.ImobilitiesGetResponse;
-import eu.erasmuswithoutpaper.api.imobilities.endpoints.StudentMobilityForStudies;
-import eu.erasmuswithoutpaper.api.imobilities.tors.endpoints.ImobilityTorsGetResponse;
-import eu.erasmuswithoutpaper.api.imobilities.tors.endpoints.ImobilityTorsIndexResponse;
+import eu.erasmuswithoutpaper.api.imobilities.endpoints.StudentMobility;
+import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.OmobilityLasIndexResponse;
 import eu.erasmuswithoutpaper.common.control.GlobalProperties;
+import eu.erasmuswithoutpaper.common.control.RegistryClient;
 import eu.erasmuswithoutpaper.error.control.EwpWebApplicationException;
-import eu.erasmuswithoutpaper.imobility.control.IncomingMobilityConverter;
-import eu.erasmuswithoutpaper.imobility.entity.IMobility;
-import eu.erasmuswithoutpaper.notification.entity.Notification;
-import eu.erasmuswithoutpaper.notification.entity.NotificationTypes;
-import eu.erasmuswithoutpaper.omobility.entity.Mobility;
+import eu.erasmuswithoutpaper.security.EwpAuthenticate;
+import eu.erasmuswithoutpaper.security.InternalAuthenticate;
 
 @Stateless
 @Path("imobilities")
 public class IncomingMobilityResource {
-    @PersistenceContext(unitName = "connector")
-    EntityManager em;
-    
     @Inject
     GlobalProperties properties;
-    
+
     @Inject
-    IncomingMobilityConverter mobilityConverter;
-    
+    RegistryClient registryClient;
+
+    @Context
+    HttpServletRequest httpRequest;
+
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(IncomingMobilityResource.class.getCanonicalName());
+
+
     @GET
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response mobilityGetGet(@QueryParam("receiving_hei_id") String receivingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
-        return mobilityGet(receivingHeiId, mobilityIdList);
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response mobilityGetGet(@QueryParam("omobility_id") List<String> omobilityIds) {
+        return mobilityGetAlgoria(omobilityIds);
     }
     
     @POST
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response mobilityGetPost(@FormParam("receiving_hei_id") String receivingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
-        return mobilityGet(receivingHeiId, mobilityIdList);
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response mobilityGetPost(@FormParam("omobility_id") List<String> omobilityIds) {
+        return mobilityGetAlgoria(omobilityIds);
+    }
+
+    @GET
+    @Path("get_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response mobilityGetTest(@QueryParam("omobility_id") List<String> omobilityIds, @QueryParam("hei_id") String heiId) {
+        LOG.info("---- START /imobilities/get_test ----");
+        return mobilityGetAlgoria(heiId, omobilityIds);
     }
     
     @POST
     @Path("cnr")
     @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response cnrPost(@FormParam("receiving_hei_id") String receivingHeiId, @FormParam("omobility_id") List<String> omobilityId) {
-        if (receivingHeiId == null || receivingHeiId.isEmpty() || omobilityId.isEmpty()) {
-            throw new EwpWebApplicationException("Missing argumanets for notification.", Response.Status.BAD_REQUEST);
-        }
-        Notification notification = new Notification();
-        notification.setType(NotificationTypes.IMOBILITY);
-        notification.setHeiId(receivingHeiId);
-        notification.setChangedElementIds(String.join(", ", omobilityId));
-        notification.setNotificationDate(new Date());
-        em.persist(notification);
+    public javax.ws.rs.core.Response cnrPost(@FormParam("omobility_id") List<String> omobilityIds) {
 
-         
-        return javax.ws.rs.core.Response.ok(new ObjectFactory().createImobilityCnrResponse(new Empty())).build();
-    }
-    
-    @GET
-    @Path("tors/get")
-    @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response mobilityTorsGetGet(@QueryParam("receiving_hei_id") String receivingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
-        return mobilityTorsGet(receivingHeiId, mobilityIdList);
-    }
-    
-    @POST
-    @Path("tors/get")
-    @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response mobilityTorsGetPost(@FormParam("receiving_hei_id") String receivingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
-        return mobilityTorsGet(receivingHeiId, mobilityIdList);
-    }
-
-    @GET
-    @Path("tors/index")
-    @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response mobilityTorsIndexGet(@QueryParam("receiving_hei_id") String receivingHeiId, @QueryParam("sending_hei_id") List<String> sendingHeiIdList) {
-        return mobilityTorsIndex(receivingHeiId, sendingHeiIdList);
-    }
-    
-    @POST
-    @Path("tors/index")
-    @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response mobilityTorsIndexPost(@FormParam("receiving_hei_id") String receivingHeiId, @FormParam("sending_hei_id") List<String> sendingHeiIdList) {
-        return mobilityTorsIndex(receivingHeiId, sendingHeiIdList);
-    }
-    
-    @POST
-    @Path("tors/cnr")
-    @Produces(MediaType.APPLICATION_XML)
-    public javax.ws.rs.core.Response torsCnrPost(@FormParam("receiving_hei_id") String receivingHeiId, @FormParam("omobility_id") List<String> omobilityId) {
-        if (receivingHeiId == null || receivingHeiId.isEmpty() || omobilityId.isEmpty()) {
-            throw new EwpWebApplicationException("Missing argumanets for notification.", Response.Status.BAD_REQUEST);
+        if (omobilityIds.size() > properties.getMaxMobilityIds()) {
+            throw new EwpWebApplicationException("Max number of omobility id's has exceeded.", Response.Status.BAD_REQUEST);
         }
-        Notification notification = new Notification();
-        notification.setType(NotificationTypes.TOR);
-        notification.setHeiId(receivingHeiId);
-        notification.setChangedElementIds(String.join(", ", omobilityId));
-        notification.setNotificationDate(new Date());
-        em.persist(notification);
-         
-        return javax.ws.rs.core.Response.ok(new eu.erasmuswithoutpaper.api.imobilities.tors.cnr.ObjectFactory().createImobilityTorCnrResponse(new Empty())).build();
-    }
 
-    private javax.ws.rs.core.Response mobilityTorsGet(String receivingHeiId, List<String> mobilityIdList) {
-        if (mobilityIdList.size() > properties.getMaxMobilityIds()) {
-            throw new EwpWebApplicationException("Max number of mobility id's has exceeded.", Response.Status.BAD_REQUEST);
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
         }
-        
-        ImobilityTorsGetResponse response = new ImobilityTorsGetResponse();
-        List<Mobility> mobilityList =  em.createNamedQuery(Mobility.findByReceivingInstitutionId).setParameter("receivingInstitutionId", receivingHeiId).getResultList();
-        mobilityList.stream().forEachOrdered((m) -> {
-            if (mobilityIdList.contains(m.getId())) {
-                response.getTor().add(mobilityConverter.convertToTor(m));
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            return javax.ws.rs.core.Response.ok(new OmobilityLasIndexResponse()).build();
+        }
+
+        String heiId = heisCoveredByCertificate.iterator().next();
+
+        CompletableFuture.runAsync(() -> {
+            for (String omobilityId : omobilityIds) {
+                try {
+                    notifyAlgoriaImobility(heiId, omobilityId);
+                } catch (Exception e) {
+                    LOG.fine("Error in AuxIiaApprovalThread: " + e.getMessage());
+                }
             }
         });
-        
-        return javax.ws.rs.core.Response.ok(response).build();
-    }    
 
-    private Response mobilityTorsIndex(String receivingHeiId, List<String> sendingHeiIdList) {
-        List<Mobility> mobilityList =  em.createNamedQuery(Mobility.findByReceivingInstitutionId).setParameter("receivingInstitutionId", receivingHeiId).getResultList();
-        
-        ImobilityTorsIndexResponse response = new ImobilityTorsIndexResponse();
-        mobilityList.stream().forEachOrdered((m) -> {
-            if (sendingHeiIdList.isEmpty() || sendingHeiIdList.contains(m.getSendingInstitutionId())) {
-                response.getOmobilityId().add(m.getId());
-            }
-        });
-        
-        return javax.ws.rs.core.Response.ok(response).build();
+
+        eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory factory = new eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory();
+
+        return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
+    }
+
+    private javax.ws.rs.core.Response mobilityGetAlgoria(List<String> omobilityIds) {
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
+        String heiId = heisCoveredByCertificate.iterator().next();
+
+        return mobilityGetAlgoria(heiId, omobilityIds);
     }
     
-    private javax.ws.rs.core.Response mobilityGet(String receivingHeiId, List<String> mobilityIdList) {
-        if (mobilityIdList.size() > properties.getMaxMobilityIds()) {
-            throw new EwpWebApplicationException("Max number of mobility id's has exceeded.", Response.Status.BAD_REQUEST);
+    private javax.ws.rs.core.Response mobilityGetAlgoria(String heiId, List<String> omobilityIds) {
+        LOG.fine("heiId: " + heiId);
+
+        if (omobilityIds.size() > properties.getMaxMobilityIds()) {
+            throw new EwpWebApplicationException("Max number of omobility id's has exceeded.", Response.Status.BAD_REQUEST);
         }
-        
+
+        LOG.fine("omobilityIds: " + omobilityIds.toString());
+
         ImobilitiesGetResponse response = new ImobilitiesGetResponse();
-        
-        //Give all Incoming Mobilities
-        List<IMobility> imobilityList =  em.createNamedQuery(IMobility.findAll).getResultList();
-        if (!imobilityList.isEmpty()) {
-        	
-        	//Give all outgoing mobilities from the receiving institution
-        	List<Mobility> mobilitiesByReceivingId = em.createNamedQuery(Mobility.findByReceivingInstitutionId).setParameter("receivingInstitutionId", receivingHeiId).getResultList();
-        	
-        	//Get all incoming that match with the outgoing mobilitites
-        	imobilityList = imobilityList.stream().filter(imo -> findOmobilityIdMatch.test(mobilitiesByReceivingId,imo)).collect(Collectors.toList());
-        	        
-        	//Filter incoming list using the received list of outgoing mobilities ids
-            response.getSingleIncomingMobilityObject().addAll(mobilities(imobilityList, mobilityIdList));
+        String token = properties.getAlgoriaAuthotizationToken();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        for (String omobilityId : omobilityIds) {
+            String url = properties.getAlgoriaOmobilityByIDUrl(heiId, omobilityId);
+            LOG.fine("Algoria GET URL: " + url);
+            WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
+            Response algoriaResponse = target.request().header("Authorization", token).get();
+            String rawBody = algoriaResponse.readEntity(String.class);
+            try {
+                JsonNode root = mapper.readTree(rawBody);
+
+                JsonNode laNode = root.get("la");
+                if (laNode != null && laNode.isObject()) {
+                    ObjectNode laObject = (ObjectNode) laNode;
+
+                    StudentMobility la = mapper.treeToValue(laObject, StudentMobility.class);
+                    response.getSingleIncomingMobilityObject().add(la);
+                }
+            } catch (Exception e) {
+                LOG.warning("Algoria get response (" + algoriaResponse.getStatus() + ") for " + omobilityIds + " raw:\n" + rawBody);
+                LOG.warning("Algoria get parse error for " + omobilityIds + ": " + e.getMessage());
+            } finally {
+                algoriaResponse.close();
+            }
         }
-        
+
         return javax.ws.rs.core.Response.ok(response).build();
     }
-    
-    BiPredicate<List<Mobility>, IMobility> findOmobilityIdMatch = new BiPredicate<List<Mobility>, IMobility>()
-    {
-        @Override
-        public boolean test(List<Mobility> mobilities, IMobility imobility) {
-        	return mobilities.stream().anyMatch(m -> m.getId().equals(imobility.getOmobilityId()));
-        }
-    };
-    
-    private List<StudentMobilityForStudies> mobilities(List<IMobility> mobilityList, List<String> mobilityIdList) {
-        List<StudentMobilityForStudies> mobilities = new ArrayList<>();
-        mobilityList.stream().forEachOrdered((m) -> {
-            if (mobilityIdList.contains(m.getOmobilityId())) {
-                mobilities.add(mobilityConverter.convertToStudentMobilityForStudies(m));
+
+    private void notifyAlgoriaImobility(String sendingHeiId, String omobilityId) {
+        String token = properties.getAlgoriaAuthotizationToken();
+        String url = properties.getAlgoriaOmobilityNotifyUrl(sendingHeiId, omobilityId);
+        try {
+            Response algoriaResponse = ClientBuilder.newBuilder()
+                    .build()
+                    .target(url.trim())
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", token)
+                    .method("POST");
+            try {
+                String rawBody = algoriaResponse.readEntity(String.class);
+                if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                    LOG.warning("Algoria notify failed. HTTP " + algoriaResponse.getStatus()
+                            + " URL=" + url + " body:\n" + rawBody);
+                } else {
+                    LOG.fine("Algoria notify OK. HTTP " + algoriaResponse.getStatus()
+                            + " URL=" + url + " body:\n" + rawBody);
+                }
+            } finally {
+                algoriaResponse.close();
             }
-        });
-        
-        return mobilities;
+        } catch (Exception e) {
+            LOG.warning("Algoria notify error for imobilityId=" + omobilityId + ": " + e.getMessage());
+        }
     }
 }

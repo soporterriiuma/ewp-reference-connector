@@ -184,22 +184,22 @@
 
 
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobilities/v1.0.0/endpoints/get-response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobilities/blob/stable-v1/endpoints/get-response.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobilities/stable-v2/endpoints/get-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobilities/blob/stable-v2/endpoints/get-response.xsd"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobilities/v1.0.0/manifest-entry.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobilities/blob/stable-v1/manifest-entry.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobilities/stable-v2/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobilities/blob/stable-v2/manifest-entry.xsd"
     />
 
 
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/v1.0.0/response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/tree/stable-v1"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/stable-v2/response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/tree/stable-v2"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/v1.0.0/manifest-entry.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/blob/stable-v1/manifest-entry.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/stable-v2/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/blob/stable-v2/manifest-entry.xsd"
     />
 
 

@@ -1,18 +1,14 @@
 package eu.erasmuswithoutpaper.omobility.boundary;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -32,36 +28,26 @@ import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.architecture.MultilineStringWithOptionalLang;
-import eu.erasmuswithoutpaper.api.omobilities.endpoints.OmobilitiesGetResponse;
-import eu.erasmuswithoutpaper.api.omobilities.endpoints.OmobilitiesIndexResponse;
-import eu.erasmuswithoutpaper.api.omobilities.endpoints.StudentMobility;
+import eu.erasmuswithoutpaper.api.omobilities.endpoints.*;
 import eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.stats.LasIncomingStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.*;
+import eu.erasmuswithoutpaper.api.omobilities.stats.OmobilityStatsResponse;
 import eu.erasmuswithoutpaper.common.control.GlobalProperties;
 import eu.erasmuswithoutpaper.common.control.RegistryClient;
-import eu.erasmuswithoutpaper.common.control.RestClient;
 import eu.erasmuswithoutpaper.error.control.EwpWebApplicationException;
-import eu.erasmuswithoutpaper.omobility.control.OutgoingMobilityConverter;
-import eu.erasmuswithoutpaper.omobility.entity.Mobility;
-import eu.erasmuswithoutpaper.omobility.las.boundary.OmobilitiesLasAuxThread;
-import eu.erasmuswithoutpaper.omobility.las.boundary.OutgoingMobilityLearningAgreementsResource;
-import eu.erasmuswithoutpaper.omobility.las.control.LearningAgreementEJB;
-import eu.erasmuswithoutpaper.omobility.las.control.OutgoingMobilityLearningAgreementsConverter;
-import eu.erasmuswithoutpaper.omobility.las.dto.AlgoriaOmobilityLasIndexDto;
+import eu.erasmuswithoutpaper.omobility.dto.AlgoriaOmobilityIndexDto;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
 import eu.erasmuswithoutpaper.security.InternalAuthenticate;
 
 @Stateless
 @Path("omobilities")
 public class OutgoingMobilityResource {
-
     @Inject
     GlobalProperties properties;
 
@@ -71,79 +57,70 @@ public class OutgoingMobilityResource {
     @Context
     HttpServletRequest httpRequest;
 
-    @Inject
-    OmobilitiesLasAuxThread ait;
-
-    @Inject
-    RestClient restClient;
-
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(OutgoingMobilityResource.class.getCanonicalName());
 
     @GET
     @Path("index")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response indexGet(@QueryParam("sending_hei_id") List<String> sendingHeiIds, @QueryParam("receiving_hei_id") List<String> receivingHeiIdList, @QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
-                                              @QueryParam("global_id") List<String> globalIds, @QueryParam("mobility_type") List<String> mobilityTypes, @QueryParam("modified_since") List<String> modifiedSinces) {
-        return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+    public javax.ws.rs.core.Response indexGet(@QueryParam("receiving_academic_year_id") List<String> receivingAcademicYearIds, @QueryParam("global_id") List<String> globalIds,
+                                              @QueryParam("activity_attributes") List<String> activityAttributes, @QueryParam("modified_since") List<String> modifiedSinces) {
+        return omobilityIndexAlgoria(receivingAcademicYearIds, globalIds, activityAttributes, modifiedSinces);
     }
 
     @POST
     @Path("index")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response indexPost(@FormParam("sending_hei_id") List<String> sendingHeiIds, @FormParam("receiving_hei_id") List<String> receivingHeiIdList, @FormParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
-                                               @FormParam("global_id") List<String> globalIds, @FormParam("mobility_type") List<String> mobilityTypes, @FormParam("modified_since") List<String> modifiedSinces) {
-        return omobilityLasIndexAlgoria(sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+    public javax.ws.rs.core.Response indexPost(@FormParam("receiving_academic_year_id") List<String> receivingAcademicYearIds, @FormParam("global_id") List<String> globalIds,
+                                               @FormParam("activity_attributes") List<String> activityAttributes, @FormParam("modified_since") List<String> modifiedSinces) {
+        return omobilityIndexAlgoria(receivingAcademicYearIds, globalIds, activityAttributes, modifiedSinces);
     }
 
     @GET
     @Path("index_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
-    public javax.ws.rs.core.Response indexPostTest(@QueryParam("receiving_hei_id") List<String> receivingHeiIdList, @QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids,
-                                                   @QueryParam("global_id") List<String> globalIds, @QueryParam("mobility_type") List<String> mobilityTypes, @QueryParam("modified_since") List<String> modifiedSinces, @QueryParam("receiving_hei_id") String recivingHeiId) {
+    public javax.ws.rs.core.Response indexPostTest(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_ids, @QueryParam("global_id") List<String> globalIds,
+                                                   @QueryParam("activity_attributes") List<String> activityAttributes, @QueryParam("modified_since") List<String> modifiedSinces, @QueryParam("hei_id") String heiId) {
         LOG.info("---- START /omobilities/las/index_test ----");
-        return omobilityLasIndexAlgoria(recivingHeiId, Collections.singletonList("uma.es"), receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
+        return omobilityIndexAlgoria(heiId, receiving_academic_year_ids, globalIds, activityAttributes, modifiedSinces);
     }
 
     @GET
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response omobilityGetGet(@QueryParam("sending_hei_id") List<String> sendingHeiId, @QueryParam("omobility_id") List<String> mobilityIdList) {
-        return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
+    public javax.ws.rs.core.Response omobilityGetGet(@QueryParam("omobility_id") List<String> omobilityIds) {
+        return mobilityGetAlgoria(omobilityIds);
     }
 
     @POST
     @Path("get")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response omobilityGetPost(@FormParam("sending_hei_id") List<String> sendingHeiId, @FormParam("omobility_id") List<String> mobilityIdList) {
-        return mobilityGetAlgoria(sendingHeiId, mobilityIdList);
+    public javax.ws.rs.core.Response omobilityGetPost(@FormParam("omobility_id") List<String> omobilityIds) {
+        return mobilityGetAlgoria(omobilityIds);
     }
 
     @GET
     @Path("get_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
-    public javax.ws.rs.core.Response omobilityGetPostTest(@QueryParam("omobility_id") List<String> mobilityIdList, @QueryParam("receiving_hei_id") String recivingHeiId) {
-        LOG.info("---- START /omobilities/las/get_test ----");
-        return mobilityGetAlgoria(Collections.singletonList("uma.es"), mobilityIdList, recivingHeiId);
+    public javax.ws.rs.core.Response omobilityGetPostTest(@QueryParam("omobility_id") List<String> omobilityIds, @QueryParam("hei_id") String heiId) {
+        LOG.info("---- START /omobilities/get_test ----");
+        return mobilityGetAlgoria(heiId, omobilityIds);
     }
 
     @POST
     @Path("update")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoria(OmobilityLasUpdateRequest request) {
+    public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoria(OmobilitiesUpdateRequest request) {
         if (request == null) {
             throw new EwpWebApplicationException("No update data was sent", Response.Status.BAD_REQUEST);
         }
-        if (request.getSendingHeiId() == null || request.getSendingHeiId().isEmpty()) {
-            throw new EwpWebApplicationException("Mising required parameter, sending-hei-id is required", Response.Status.BAD_REQUEST);
-        }
-        if (request.getApproveProposalV1() == null && request.getCommentProposalV1() == null) {
+        if (request.getApproveProposalV1() == null && request.getRejectProposalV1() == null) {
             throw new EwpWebApplicationException("Mising required parameter, approve-proposal-v1 and comment-proposal-v1 both of them can not be missing", Response.Status.BAD_REQUEST);
         }
 
@@ -158,15 +135,15 @@ public class OutgoingMobilityResource {
             return javax.ws.rs.core.Response.ok(new OmobilityLasIndexResponse()).build();
         }
 
-        String recivingHeiId = heisCoveredByCertificate.iterator().next();
+        String heiId = heisCoveredByCertificate.iterator().next();
 
         String omobilityId = null;
         String action = null;
         if (request.getApproveProposalV1() != null) {
             omobilityId = request.getApproveProposalV1().getOmobilityId();
             action = "approve";
-        } else if (request.getCommentProposalV1() != null) {
-            omobilityId = request.getCommentProposalV1().getOmobilityId();
+        } else if (request.getRejectProposalV1() != null) {
+            omobilityId = request.getApproveProposalV1().getOmobilityId();
             action = "reject";
         }
 
@@ -174,24 +151,12 @@ public class OutgoingMobilityResource {
             throw new EwpWebApplicationException("Mising required parameter, omobility-id is required", Response.Status.BAD_REQUEST);
         }
 
-        String url = properties.getAlgoriaOmobilityByIDLasUrl(recivingHeiId, omobilityId) + action + "/";
+        String url = properties.getAlgoriaOmobilityByIDUrl(heiId, omobilityId) + action + "/";
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(XMLGregorianCalendar.class, new JsonSerializer<XMLGregorianCalendar>() {
-            @Override
-            public void serialize(XMLGregorianCalendar value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-                if (value == null) {
-                    gen.writeNull();
-                    return;
-                }
-                gen.writeString(value.toXMLFormat());
-            }
-        });
-        mapper.registerModule(module);
 
         try {
             JsonNode node = mapper.valueToTree(request);
@@ -237,7 +202,7 @@ public class OutgoingMobilityResource {
             throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
         }
 
-        OmobilityLasUpdateResponse response = new OmobilityLasUpdateResponse();
+        OmobilitiesUpdateResponse response = new OmobilitiesUpdateResponse();
         MultilineStringWithOptionalLang message = new MultilineStringWithOptionalLang();
         message.setLang("en");
         message.setValue("Updated.");
@@ -246,25 +211,60 @@ public class OutgoingMobilityResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }
 
+    @POST
+    @Path("cnr")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response omobilitiesLasCnrAlgoria(@FormParam("omobility_id") List<String> omobilityIdList) {
+
+        if (omobilityIdList.size() > properties.getMaxOmobilitylasIds()) {
+            throw new EwpWebApplicationException("Max number of omobility id's has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            return javax.ws.rs.core.Response.ok(new OmobilityLasIndexResponse()).build();
+        }
+
+        String heiId = heisCoveredByCertificate.iterator().next();
+
+        CompletableFuture.runAsync(() -> {
+            for (String omobilityId : omobilityIdList) {
+                try {
+                    notifyAlgoriaImobility(heiId, omobilityId);
+                } catch (Exception e) {
+                    LOG.fine("Error in AuxIiaApprovalThread: " + e.getMessage());
+                }
+            }
+        });
+
+
+        eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory factory = new eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory();
+
+        return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
+    }
+
     @GET
     @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
-        LOG.info("---- START /omobilities/las/test_stats ----");
+        LOG.info("---- START /omobilities/stats ----");
 
-        String url = properties.getAlgoriaOmobilityLasStatsUrl();
+        String url = properties.getAlgoriaOmobilityStatsUrl();
         String token = properties.getAlgoriaAuthotizationToken();
-        LOG.info("Algoria stats outbound method=GET");
         LOG.info("Algoria stats outbound url=" + url);
-        LOG.info("Algoria stats outbound header Authorization=" + token);
 
         Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
             LOG.info("Algoria stats response status=" + algoriaResponse.getStatus());
-            LOG.info("Algoria stats response headers=" + algoriaResponse.getStringHeaders());
-            LOG.info("Algoria stats raw body:\n" + rawBody);
             if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
                 throw new EwpWebApplicationException("Stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
             }
@@ -295,7 +295,7 @@ public class OutgoingMobilityResource {
                 }
             }
 
-            LasOutgoingStatsResponse response = mapper.convertValue(root, LasOutgoingStatsResponse.class);
+            OmobilityStatsResponse response = mapper.convertValue(root, OmobilityStatsResponse.class);
             LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
@@ -310,37 +310,7 @@ public class OutgoingMobilityResource {
         }
     }
 
-    @POST
-    @Path("cnr")
-    @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
-    public javax.ws.rs.core.Response omobilitiesLasCnrAlgoria(@FormParam("sending_hei_id") String sendingHeiId, @FormParam("omobility_id") List<String> omobilityIdList) {
-        if (sendingHeiId == null || sendingHeiId.trim().isEmpty()) {
-            throw new EwpWebApplicationException("Missing argumanets for get.", Response.Status.BAD_REQUEST);
-        }
-
-        if (omobilityIdList.size() > properties.getMaxOmobilitylasIds()) {
-            throw new EwpWebApplicationException("Max number of omobility learning agreements id's has exceeded.", Response.Status.BAD_REQUEST);
-        }
-
-        CompletableFuture.runAsync(() -> {
-            for (String omobilityId : omobilityIdList) {
-                try {
-                    ait.createLasAlgoria(sendingHeiId, omobilityId);
-                } catch (Exception e) {
-                    LOG.fine("Error in AuxIiaApprovalThread: " + e.getMessage());
-                }
-            }
-        });
-
-
-
-        eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory factory = new eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.ObjectFactory();
-
-        return javax.ws.rs.core.Response.ok(factory.createOmobilityLaCnrResponse(new Empty())).build();
-    }
-
-    private javax.ws.rs.core.Response mobilityGetAlgoria(List<String> sendingHeiIds, List<String> mobilityIdList) {
+    private javax.ws.rs.core.Response omobilityIndexAlgoria(List<String> receivingAcademicYearIds, List<String> globalIds, List<String> activityAttributes, List<String> modifiedSinces) {
         Collection<String> heisCoveredByCertificate;
         if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
             heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
@@ -352,38 +322,147 @@ public class OutgoingMobilityResource {
             throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
-        String receivingHeiId = heisCoveredByCertificate.iterator().next();
+        String partnerHeiId = heisCoveredByCertificate.iterator().next();
 
-        return mobilityGetAlgoria(sendingHeiIds, mobilityIdList, receivingHeiId);
+        return omobilityIndexAlgoria(partnerHeiId, receivingAcademicYearIds, globalIds, activityAttributes, modifiedSinces);
     }
 
-    private javax.ws.rs.core.Response mobilityGetAlgoria(List<String> sendingHeiIds, List<String> mobilityIdList, String receivingHeiId) {
-        if (sendingHeiIds != null && sendingHeiIds.size() > 1) {
-            throw new EwpWebApplicationException("Only one sending HEI ID is allowed.", Response.Status.BAD_REQUEST);
-        }
-        if (sendingHeiIds == null || sendingHeiIds.isEmpty()) {
-            throw new EwpWebApplicationException("Missing sending HEI ID.", Response.Status.BAD_REQUEST);
-        }
-        String sendingHeiId = sendingHeiIds.get(0);
-        if (sendingHeiId == null || sendingHeiId.trim().isEmpty() || mobilityIdList == null || mobilityIdList.isEmpty()) {
-            throw new EwpWebApplicationException("Missing argumanets for get.", Response.Status.BAD_REQUEST);
-        }
-        LOG.fine("sendingHeiId: " + sendingHeiId);
-
-        if (mobilityIdList.size() > properties.getMaxOmobilitylasIds()) {
-            throw new EwpWebApplicationException("Max number of omobility learning agreements id's has exceeded.", Response.Status.BAD_REQUEST);
-        }
+    private javax.ws.rs.core.Response omobilityIndexAlgoria(String partnerHeiId, List<String> receivingAcademicYearIds, List<String> globalIds, List<String> activityAttributes, List<String> modifiedSinces) {
+        LOG.info("omobilityIndexAlgoria: Starting index request with parameters: partnerHeiId=" + partnerHeiId);
+        String receivingAcademicYearId;
+        String globalId;
+        String activityAttribute;
+        String modifiedSince;
 
 
-        LOG.fine("mobilityIdList: " + mobilityIdList.toString());
+        String fistYear = null;
+        if (receivingAcademicYearIds.size() > 1) {
+            throw new EwpWebApplicationException("Too many receiving_academic_year_id parameters.", Response.Status.BAD_REQUEST);
+        } else if (!receivingAcademicYearIds.isEmpty()) {
+            receivingAcademicYearId = receivingAcademicYearIds.get(0);
+            fistYear = receivingAcademicYearId.split("/")[0];
+        } else {
+            receivingAcademicYearId = null;
+        }
 
-        OmobilityLasGetResponse response = new OmobilityLasGetResponse();
+        if (globalIds.size() > 1) {
+            throw new EwpWebApplicationException("Too many global_id parameters.", Response.Status.BAD_REQUEST);
+        } else if (!globalIds.isEmpty()) {
+            globalId = globalIds.get(0);
+        } else {
+            globalId = null;
+        }
+
+        if (activityAttributes.size() > 1) {
+            throw new EwpWebApplicationException("Too many activity_attributes parameters.", Response.Status.BAD_REQUEST);
+        } else if (!activityAttributes.isEmpty()) {
+            activityAttribute = activityAttributes.get(0);
+        } else {
+            activityAttribute = null;
+        }
+
+        if (modifiedSinces.size() > 1) {
+            throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
+        } else if (!modifiedSinces.isEmpty()) {
+            modifiedSince = modifiedSinces.get(0);
+            OffsetDateTime dateTime;
+            try {
+                dateTime = OffsetDateTime.parse(modifiedSince, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            } catch (DateTimeParseException ex) {
+                String normalized = modifiedSince.trim();
+                // If offset is space-separated or missing sign, normalize to "+HH:MM"
+                if (normalized.length() > 19) {
+                    char c = normalized.charAt(19);
+                    if (c == ' ') {
+                        normalized = normalized.substring(0, 19) + "+" + normalized.substring(20);
+                    } else if (c >= '0' && c <= '9') {
+                        normalized = normalized.substring(0, 19) + "+" + normalized.substring(19);
+                    }
+                }
+                dateTime = OffsetDateTime.parse(normalized, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            }
+
+            DateTimeFormatter formatter =
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
+
+            modifiedSince = dateTime.format(formatter);
+        } else {
+            modifiedSince = null;
+        }
+
+        LOG.info("omobilityLasIndexAlgoria: Parameters parsed");
+
+        OmobilitiesIndexResponse response = new OmobilitiesIndexResponse();
+
+        String url = properties.getAlgoriaOmobilityUrl(partnerHeiId);
+        String token = properties.getAlgoriaAuthotizationToken();
+
+        WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
+
+        if (fistYear != null) {
+            target = target.queryParam("receiving_academic_year", fistYear);
+        }
+        if (globalId != null) {
+            target = target.queryParam("student_id", globalId);
+        }
+        if (activityAttribute != null) {
+            target = target.queryParam("activity_attribute", activityAttribute);
+        }
+        if (modifiedSince != null) {
+            target = target.queryParam("modified_since", modifiedSince);
+        }
+
+        Response algoriaResponse = target.request().header("Authorization", token).get();
+        String rawBody = algoriaResponse.readEntity(String.class);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityIndexDto.class);
+
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }
+        } catch (Exception e) {
+            LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+            LOG.warning("Algoria response parse error: " + e.getMessage());
+        }
+
+        return javax.ws.rs.core.Response.ok(response).build();
+    }
+
+    private javax.ws.rs.core.Response mobilityGetAlgoria(List<String> omobilityIds) {
+        Collection<String> heisCoveredByCertificate;
+        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
+        } else {
+            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
+        }
+
+        if (heisCoveredByCertificate.isEmpty()) {
+            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
+        }
+
+        String heiId = heisCoveredByCertificate.iterator().next();
+
+        return mobilityGetAlgoria(heiId, omobilityIds);
+    }
+
+    private javax.ws.rs.core.Response mobilityGetAlgoria(String heiId, List<String> omobilityIds) {
+        LOG.fine("heiId: " + heiId);
+
+        if (omobilityIds.size() > properties.getMaxOmobilityIds()) {
+            throw new EwpWebApplicationException("Max number of omobility id's has exceeded.", Response.Status.BAD_REQUEST);
+        }
+
+
+        LOG.fine("omobilityIds: " + omobilityIds.toString());
+
+        OmobilitiesGetResponse response = new OmobilitiesGetResponse();
         String token = properties.getAlgoriaAuthotizationToken();
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        for (String mobilityId : mobilityIdList) {
-            String url = properties.getAlgoriaOmobilityByIDLasUrl(receivingHeiId, mobilityId);
+        for (String omobilityId : omobilityIds) {
+            String url = properties.getAlgoriaOmobilityByIDUrl(heiId, omobilityId);
             LOG.fine("Algoria GET URL: " + url);
             WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
             Response algoriaResponse = target.request().header("Authorization", token).get();
@@ -401,13 +480,13 @@ public class OutgoingMobilityResource {
                     normalizeComponents(laObject.get("approvedChanges"));
                     normalizeComponents(laObject.get("changesProposal"));
 
-                    LearningAgreement la = mapper.treeToValue(laObject, LearningAgreement.class);
+                    StudentMobility la = mapper.treeToValue(laObject, StudentMobility.class);
                     stripDateTimezones(la);
-                    response.getLa().add(la);
+                    response.getSingleMobilityObject().add(la);
                 }
             } catch (Exception e) {
-                LOG.warning("Algoria get response (" + algoriaResponse.getStatus() + ") for " + mobilityId + " raw:\n" + rawBody);
-                LOG.warning("Algoria get parse error for " + mobilityId + ": " + e.getMessage());
+                LOG.warning("Algoria get response (" + algoriaResponse.getStatus() + ") for " + omobilityIds + " raw:\n" + rawBody);
+                LOG.warning("Algoria get parse error for " + omobilityIds + ": " + e.getMessage());
             } finally {
                 algoriaResponse.close();
             }
@@ -416,12 +495,37 @@ public class OutgoingMobilityResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }
 
-    private void stripDateTimezones(LearningAgreement la) {
+    private void notifyAlgoriaImobility(String sendingHeiId, String omobilityId) {
+        String token = properties.getAlgoriaAuthotizationToken();
+        String url = properties.getAlgoriaImobilityNotifyUrl(sendingHeiId, omobilityId);
+        try {
+            Response algoriaResponse = ClientBuilder.newBuilder()
+                    .build()
+                    .target(url.trim())
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", token)
+                    .method("POST");
+            try {
+                String rawBody = algoriaResponse.readEntity(String.class);
+                if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                    LOG.warning("Algoria notify failed. HTTP " + algoriaResponse.getStatus()
+                            + " URL=" + url + " body:\n" + rawBody);
+                } else {
+                    LOG.fine("Algoria notify OK. HTTP " + algoriaResponse.getStatus()
+                            + " URL=" + url + " body:\n" + rawBody);
+                }
+            } finally {
+                algoriaResponse.close();
+            }
+        } catch (Exception e) {
+            LOG.warning("Algoria notify error for imobilityId=" + omobilityId + ": " + e.getMessage());
+        }
+    }
+
+    private void stripDateTimezones(StudentMobility la) {
         if (la == null) {
             return;
         }
-        stripTimezone(la.getStartDate());
-        stripTimezone(la.getEndDate());
         if (la.getStudent() != null) {
             stripTimezone(la.getStudent().getBirthDate());
         }
@@ -648,140 +752,5 @@ public class OutgoingMobilityResource {
             }
         }
         return null;
-    }
-
-    private javax.ws.rs.core.Response omobilityLasIndexAlgoria(List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
-        Collection<String> heisCoveredByCertificate;
-        if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
-            heisCoveredByCertificate = registryClient.getHeisCoveredByClientKey((RSAPublicKey) httpRequest.getAttribute("EwpRequestRSAPublicKey"));
-        } else {
-            heisCoveredByCertificate = registryClient.getHeisCoveredByCertificate((X509Certificate) httpRequest.getAttribute("EwpRequestCertificate"));
-        }
-
-        if (heisCoveredByCertificate.isEmpty()) {
-            throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
-        }
-
-        String receivingHeiId = heisCoveredByCertificate.iterator().next();
-
-        return omobilityLasIndexAlgoria(receivingHeiId, sendingHeiIds, receivingHeiIdList, receiving_academic_year_ids, globalIds, mobilityTypes, modifiedSinces);
-    }
-
-
-    private javax.ws.rs.core.Response omobilityLasIndexAlgoria(String receivingHeiId, List<String> sendingHeiIds, List<String> receivingHeiIdList, List<String> receiving_academic_year_ids, List<String> globalIds, List<String> mobilityTypes, List<String> modifiedSinces) {
-        LOG.info("omobilityLasIndexAlgoria: Starting index request with parameters: sendingHeiIds=" + sendingHeiIds);
-        String receiving_academic_year_id;
-        String globalId;
-        String mobilityType;
-        String modifiedSince;
-
-        if (sendingHeiIds.size() != 1) {
-            throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
-        }
-
-        /*Map<String, String> urls = registryClient.getOmobilityLasHeiUrls(recivingHeiId);
-        if (urls == null || urls.isEmpty()) {
-            throw new EwpWebApplicationException("Unknown heiId: " + recivingHeiId, Response.Status.BAD_REQUEST);
-        }*/
-
-
-        String fistYear = null;
-        if (receiving_academic_year_ids.size() > 1) {
-            throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
-        } else if (!receiving_academic_year_ids.isEmpty()) {
-            receiving_academic_year_id = receiving_academic_year_ids.get(0);
-            try {
-                //String adjustedDateString = receiving_academic_year_id.replaceAll("([\\+\\-]\\d{2}):(\\d{2})", "$1$2");
-                System.out.println((new SimpleDateFormat("yyyy/yyyy")).parse(receiving_academic_year_id));
-                fistYear = receiving_academic_year_id.split("/")[0];
-            } catch (ParseException e) {
-                throw new EwpWebApplicationException("Can not convert date.", Response.Status.BAD_REQUEST);
-            }
-        } else {
-            receiving_academic_year_id = null;
-        }
-
-        if (globalIds.size() > 1) {
-            throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
-        } else if (!globalIds.isEmpty()) {
-            globalId = globalIds.get(0);
-        } else {
-            globalId = null;
-        }
-
-        if (mobilityTypes.size() > 1) {
-            throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
-        } else if (!mobilityTypes.isEmpty()) {
-            mobilityType = mobilityTypes.get(0);
-        } else {
-            mobilityType = null;
-        }
-
-        if (modifiedSinces.size() > 1) {
-            throw new EwpWebApplicationException("Missing argumanets for indexes.", Response.Status.BAD_REQUEST);
-        } else if (!modifiedSinces.isEmpty()) {
-            modifiedSince = modifiedSinces.get(0);
-            OffsetDateTime dateTime;
-            try {
-                dateTime = OffsetDateTime.parse(modifiedSince, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            } catch (DateTimeParseException ex) {
-                String normalized = modifiedSince.trim();
-                // If offset is space-separated or missing sign, normalize to "+HH:MM"
-                if (normalized.length() > 19) {
-                    char c = normalized.charAt(19);
-                    if (c == ' ') {
-                        normalized = normalized.substring(0, 19) + "+" + normalized.substring(20);
-                    } else if (c >= '0' && c <= '9') {
-                        normalized = normalized.substring(0, 19) + "+" + normalized.substring(19);
-                    }
-                }
-                dateTime = OffsetDateTime.parse(normalized, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            }
-
-            DateTimeFormatter formatter =
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
-
-            modifiedSince = dateTime.format(formatter);
-        } else {
-            modifiedSince = null;
-        }
-
-        LOG.info("omobilityLasIndexAlgoria: Parameters parsed");
-
-        OmobilityLasIndexResponse response = new OmobilityLasIndexResponse();
-
-        String url = properties.getAlgoriaOmobilityLasUrl(receivingHeiId);
-        String token = properties.getAlgoriaAuthotizationToken();
-
-        WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
-
-        if(fistYear != null) {
-            target = target.queryParam("receiving_academic_year", fistYear);
-        }
-        if (globalId != null) {
-            target = target.queryParam("student_id", globalId);
-        }
-        if (mobilityType != null) {
-            target = target.queryParam("mobility_type", mobilityType);
-        }
-        if (modifiedSince != null) {
-            target = target.queryParam("modified_since", modifiedSince); //TODO: check date format
-        }
-
-        Response algoriaResponse = target.request().header("Authorization", token).get();
-        String rawBody = algoriaResponse.readEntity(String.class);
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
-
-            if (dto.getElements() != null) {
-                response.getOmobilityId().addAll(dto.getElements());
-            }
-        } catch (Exception e) {
-            LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
-            LOG.warning("Algoria response parse error: " + e.getMessage());
-        }
-
-        return javax.ws.rs.core.Response.ok(response).build();
     }
 }
