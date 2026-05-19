@@ -92,9 +92,7 @@ public class HttpSignature {
                 reqSig = Signature.fromString(requestAuthorization);
             }
 
-            final Date today = new Date();
-            final String stringToday = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
-                    .format(today);
+            final String stringToday = formatRfc2616Date(new Date());
 
             /*byte[] bodyBytes = getByteArray(responseContext);
             final byte[] digest = MessageDigest.getInstance("SHA-256").digest(bodyBytes);
@@ -160,10 +158,7 @@ public class HttpSignature {
 
             headers.put("X-Request-Id", requestId);
 
-            final Date today = new Date();
-            final SimpleDateFormat rfc1123Format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-            rfc1123Format.setTimeZone(TimeZone.getTimeZone("GMT")); // Set timezone to GMT
-            final String stringToday = rfc1123Format.format(today);
+            final String stringToday = formatRfc2616Date(new Date());
             headers.put("Original-Date", stringToday);
 
             headers.put("Host", uri.getHost());
@@ -580,6 +575,12 @@ public class HttpSignature {
             logger.warn("Can't parse date: " + dateString, e);
         }
         return false;
+    }
+
+    private String formatRfc2616Date(Date date) {
+        final SimpleDateFormat rfc1123Format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+        rfc1123Format.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return rfc1123Format.format(date);
     }
 
 }
