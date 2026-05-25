@@ -346,20 +346,6 @@ public class OutgoingMobilityLearningAgreementsResource {
                     LOG.warning("Algoria update failed. HTTP " + algoriaResponse.getStatus() + ". Response body:\n" + rawBody);
                     throw new EwpWebApplicationException("Update failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
                 }
-                try {
-                    JsonNode respNode = mapper.readTree(rawBody);
-                    JsonNode successNode = respNode.get("success");
-                    if (successNode == null || !successNode.isBoolean()) {
-                        throw new EwpWebApplicationException("Update failed.", Response.Status.BAD_GATEWAY);
-                    }
-                    if (!successNode.asBoolean()) {
-                        throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
-                    }
-                } catch (EwpWebApplicationException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
-                }
             } finally {
                 algoriaResponse.close();
             }
@@ -446,20 +432,6 @@ public class OutgoingMobilityLearningAgreementsResource {
                 if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
                     LOG.warning("Algoria update failed. HTTP " + algoriaResponse.getStatus() + ". Response body:\n" + rawBody);
                     throw new EwpWebApplicationException("Update failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
-                }
-                try {
-                    JsonNode respNode = mapper.readTree(rawBody);
-                    JsonNode successNode = respNode.get("success");
-                    if (successNode == null || !successNode.isBoolean()) {
-                        throw new EwpWebApplicationException("Update failed.", Response.Status.BAD_GATEWAY);
-                    }
-                    if (!successNode.asBoolean()) {
-                        throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
-                    }
-                } catch (EwpWebApplicationException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
                 }
             } finally {
                 algoriaResponse.close();
