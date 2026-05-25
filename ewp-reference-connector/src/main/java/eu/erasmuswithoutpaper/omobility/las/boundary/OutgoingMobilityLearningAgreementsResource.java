@@ -380,6 +380,107 @@ public class OutgoingMobilityLearningAgreementsResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }
 
+    @POST
+    @Path("update_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoriaTest(OmobilityLasUpdateRequest request, @QueryParam("receiving_hei_id") String recivingHeiId) {
+        if (request == null) {
+            throw new EwpWebApplicationException("No update data was sent", Response.Status.BAD_REQUEST);
+        }
+        if (request.getSendingHeiId() == null || request.getSendingHeiId().isEmpty()) {
+            throw new EwpWebApplicationException("Mising required parameter, sending-hei-id is required", Response.Status.BAD_REQUEST);
+        }
+        if (request.getApproveProposalV1() == null && request.getCommentProposalV1() == null) {
+            throw new EwpWebApplicationException("Mising required parameter, approve-proposal-v1 and comment-proposal-v1 both of them can not be missing", Response.Status.BAD_REQUEST);
+        }
+
+        String omobilityId = null;
+        String action = null;
+        if (request.getApproveProposalV1() != null) {
+            omobilityId = request.getApproveProposalV1().getOmobilityId();
+            action = "approve";
+        } else if (request.getCommentProposalV1() != null) {
+            omobilityId = request.getCommentProposalV1().getOmobilityId();
+            action = "reject";
+        }
+
+        if (omobilityId == null || omobilityId.isEmpty()) {
+            throw new EwpWebApplicationException("Mising required parameter, omobility-id is required", Response.Status.BAD_REQUEST);
+        }
+
+        String url = properties.getAlgoriaOmobilityByIDLasUrl(recivingHeiId, omobilityId) + action + "/";
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(XMLGregorianCalendar.class, new JsonSerializer<XMLGregorianCalendar>() {
+            @Override
+            public void serialize(XMLGregorianCalendar value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                if (value == null) {
+                    gen.writeNull();
+                    return;
+                }
+                gen.writeString(value.toXMLFormat());
+            }
+        });
+        mapper.registerModule(module);
+
+        try {
+            JsonNode node = mapper.valueToTree(request);
+            pruneNulls(node);
+            String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+            LOG.info("Algoria update. URL: " + url + "\nJSON body:\n" + json);
+
+            String token = properties.getAlgoriaAuthotizationToken();
+            Response algoriaResponse = ClientBuilder.newBuilder()
+                    .build()
+                    .target(url.trim())
+                    .request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", token)
+                    .post(Entity.json(json));
+            try {
+                String rawBody = algoriaResponse.readEntity(String.class);
+                if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                    LOG.warning("Algoria update failed. HTTP " + algoriaResponse.getStatus() + ". Response body:\n" + rawBody);
+                    throw new EwpWebApplicationException("Update failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+                }
+                try {
+                    JsonNode respNode = mapper.readTree(rawBody);
+                    JsonNode successNode = respNode.get("success");
+                    if (successNode == null || !successNode.isBoolean()) {
+                        throw new EwpWebApplicationException("Update failed.", Response.Status.BAD_GATEWAY);
+                    }
+                    if (!successNode.asBoolean()) {
+                        throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
+                    }
+                } catch (EwpWebApplicationException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
+                }
+            } finally {
+                algoriaResponse.close();
+            }
+        } catch (Exception e) {
+            if (e instanceof EwpWebApplicationException) {
+                throw (EwpWebApplicationException) e;
+            }
+            LOG.warning("Algoria update failed: " + e.getMessage());
+            throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
+        }
+
+        OmobilityLasUpdateResponse response = new OmobilityLasUpdateResponse();
+        MultilineStringWithOptionalLang message = new MultilineStringWithOptionalLang();
+        message.setLang("en");
+        message.setValue("Updated.");
+        response.getSuccessUserMessage().add(message);
+
+        return javax.ws.rs.core.Response.ok(response).build();
+    }
+
 
     /*@GET
     @Path("stats")
