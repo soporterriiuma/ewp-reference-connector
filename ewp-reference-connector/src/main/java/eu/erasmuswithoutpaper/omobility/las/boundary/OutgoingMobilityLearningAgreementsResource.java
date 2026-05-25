@@ -383,7 +383,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @POST
     @Path("update_test")
     @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
+    @InternalAuthenticate
     public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoriaTest(OmobilityLasUpdateRequest request, @QueryParam("receiving_hei_id") String recivingHeiId) {
         if (request == null) {
             throw new EwpWebApplicationException("No update data was sent", Response.Status.BAD_REQUEST);
