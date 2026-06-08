@@ -277,6 +277,13 @@ public class OutgoingMobilityResource {
 
             JsonNode root = mapper.readTree(rawBody);
             JsonNode statsNode = root.get("academicYearNominationStats");
+            boolean nominationStats = statsNode != null;
+            if (statsNode == null) {
+                statsNode = root.get("academicYearLaStats");
+            }
+            if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
+                statsNode = statsNode.get(0);
+            }
 
             OmobilityStatsResponse response = new OmobilityStatsResponse();
             if (statsNode != null && statsNode.isArray()) {
@@ -289,8 +296,13 @@ public class OutgoingMobilityResource {
                             academicYearStats.setReceivingAcademicYearId(normalizeAcademicYearId(yearNode.asText()));
                         }
 
-                        academicYearStats.setOmobilityPending(orZero(readBigInteger(statNode.get("nominationOutgoingPending"))));
-                        academicYearStats.setOmobilityApproved(orZero(readBigInteger(statNode.get("nominationOutgoingApproved"))));
+                        if (nominationStats) {
+                            academicYearStats.setOmobilityPending(orZero(readBigInteger(statNode.get("nominationOutgoingPending"))));
+                            academicYearStats.setOmobilityApproved(orZero(readBigInteger(statNode.get("nominationOutgoingApproved"))));
+                        } else {
+                            academicYearStats.setOmobilityPending(orZero(readBigInteger(statNode.get("laOutgoingLatestVersionAwaiting"))));
+                            academicYearStats.setOmobilityApproved(orZero(readBigInteger(statNode.get("laOutgoingLatestVersionApproved"))));
+                        }
 
                         response.getAcademicYearStats().add(academicYearStats);
                     }
