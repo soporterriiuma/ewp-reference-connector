@@ -391,7 +391,7 @@ public class OutgoingMobilityResource {
             modifiedSince = null;
         }
 
-        LOG.info("omobilityLasIndexAlgoria: Parameters parsed");
+        LOG.info("omobilityIndexAlgoria: Parameters parsed");
 
         OmobilitiesIndexResponse response = new OmobilitiesIndexResponse();
 
@@ -416,15 +416,25 @@ public class OutgoingMobilityResource {
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+                throw new EwpWebApplicationException("Index request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+            }
+
             ObjectMapper mapper = new ObjectMapper();
             AlgoriaOmobilityIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityIndexDto.class);
 
             if (dto.getElements() != null) {
                 response.getOmobilityId().addAll(dto.getElements());
             }
+        } catch (EwpWebApplicationException e) {
+            throw e;
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("Index request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
