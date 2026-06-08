@@ -489,12 +489,7 @@ public class OutgoingMobilityResource {
                 if (omobilityNode.isObject()) {
                     ObjectNode laObject = (ObjectNode) omobilityNode;
 
-                    normalizeMobilityStatus(laObject);
-                    //normalizeReceivingHeiContactPerson(laObject);
-                    //normalizeDates(laObject);
-                    //normalizeComponents(laObject.get("firstVersion"));
-                    //normalizeComponents(laObject.get("approvedChanges"));
-                    //normalizeComponents(laObject.get("changesProposal"));
+                    adaptAlgoriaOmobilityGetPayload(laObject);
 
                     StudentMobility la = mapper.treeToValue(laObject, StudentMobility.class);
                     stripDateTimezones(la);
@@ -611,10 +606,64 @@ public class OutgoingMobilityResource {
         }
     }
 
-    private void normalizeMobilityStatus(ObjectNode laObject) {
-        JsonNode status = laObject.get("status");
-        if (status != null && status.isTextual()) {
-            laObject.put("status", status.asText().toUpperCase(Locale.ROOT));
+    private void adaptAlgoriaOmobilityGetPayload(ObjectNode omobility) {
+        normalizeEnumName(omobility, "status");
+
+        JsonNode student = omobility.get("student");
+        if (student != null && student.isObject()) {
+            ObjectNode studentObject = (ObjectNode) student;
+            wrapStringWithOptionalLangList(studentObject, "givenNames");
+            wrapStringWithOptionalLangList(studentObject, "familyName");
+            trimDateTimeToDate(studentObject, "birthDate");
+        }
+
+        JsonNode nomination = omobility.get("nomination");
+        if (nomination != null && nomination.isObject()) {
+            ObjectNode nominationObject = (ObjectNode) nomination;
+            normalizeEnumName(nominationObject, "activityType");
+            normalizeEnumName(nominationObject, "activityAttributes");
+            removeUnknownHeiFields(nominationObject, "sendingHei");
+            removeUnknownHeiFields(nominationObject, "receivingHei");
+        }
+    }
+
+    private void wrapStringWithOptionalLangList(ObjectNode object, String fieldName) {
+        JsonNode value = object.get(fieldName);
+        if (value == null || value.isNull() || value.isArray()) {
+            return;
+        }
+
+        ArrayNode values = object.arrayNode();
+        if (value.isTextual()) {
+            ObjectNode textObject = object.objectNode();
+            textObject.put("value", value.asText());
+            values.add(textObject);
+        } else if (value.isObject()) {
+            values.add(value);
+        }
+        object.set(fieldName, values);
+    }
+
+    private void normalizeEnumName(ObjectNode object, String fieldName) {
+        JsonNode value = object.get(fieldName);
+        if (value != null && value.isTextual()) {
+            object.put(fieldName, value.asText().trim().toUpperCase(Locale.ROOT).replace('-', '_'));
+        }
+    }
+
+    private void trimDateTimeToDate(ObjectNode object, String fieldName) {
+        JsonNode value = object.get(fieldName);
+        if (value != null && value.isTextual()) {
+            String text = value.asText();
+            int t = text.indexOf('T');
+            object.put(fieldName, t > 0 ? text.substring(0, t) : text);
+        }
+    }
+
+    private void removeUnknownHeiFields(ObjectNode nominationObject, String heiFieldName) {
+        JsonNode hei = nominationObject.get(heiFieldName);
+        if (hei != null && hei.isObject()) {
+            ((ObjectNode) hei).remove("contactPerson");
         }
     }
 
