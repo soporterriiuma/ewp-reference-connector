@@ -481,15 +481,13 @@ public class OutgoingMobilityResource {
             try {
                 JsonNode root = mapper.readTree(rawBody);
 
-                JsonNode laNode = root.get("la");
-                if (laNode != null && laNode.isObject()) {
-                    ObjectNode laObject = (ObjectNode) laNode;
-
-                    normalizeReceivingHeiContactPerson(laObject);
-                    normalizeDates(laObject);
-                    normalizeComponents(laObject.get("firstVersion"));
-                    normalizeComponents(laObject.get("approvedChanges"));
-                    normalizeComponents(laObject.get("changesProposal"));
+                JsonNode omobilityNode = root.get("omobility");
+                if (omobilityNode == null || omobilityNode.isNull()) {
+                    LOG.fine("Algoria GET returned no omobility for omobilityId=" + omobilityId);
+                    continue;
+                }
+                if (omobilityNode.isObject()) {
+                    ObjectNode laObject = (ObjectNode) omobilityNode;
 
                     StudentMobility la = mapper.treeToValue(laObject, StudentMobility.class);
                     stripDateTimezones(la);
