@@ -1155,7 +1155,7 @@ public class OutgoingMobilityLearningAgreementsResource {
     @GET
     @Path("cnr/stats")
     @Produces(MediaType.APPLICATION_XML)
-    //@EwpAuthenticate
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetStatsCnrAlgoria() {
         LOG.info("---- START /omobilities/las/cnr/stats ----");
 
