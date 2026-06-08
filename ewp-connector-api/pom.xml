@@ -89,6 +89,7 @@
 							</goals>
 							<configuration>
 								<catalog>catalog.xml</catalog>
+								<laxSchemaValidation>true</laxSchemaValidation>
 							</configuration>
 						</execution>
 					</executions>

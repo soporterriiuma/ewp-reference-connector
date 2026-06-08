@@ -204,25 +204,34 @@
 
 
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tors/v0.7.0/endpoints/get-response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v1/endpoints/get-response.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tors/v3.0.0/endpoints/get-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v3/endpoints/get-response.xsd"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tors/v0.7.0/endpoints/index-response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v1/endpoints/index-response.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tors/v3.0.0/endpoints/index-response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v3/endpoints/index-response.xsd"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tors/v0.7.0/manifest-entry.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v1/manifest-entry.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tors/v3.0.0/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v3/manifest-entry.xsd"
     />
 
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/v0.1.0/response.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/tree/stable-v1"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/v2.0.0/response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/tree/stable-v2"
     />
     <xs:import
-            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/v0.1.0/manifest-entry.xsd"
-            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/blob/stable-v1/manifest-entry.xsd"
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/v2.0.0/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/blob/stable-v2/manifest-entry.xsd"
+    />
+
+    <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tor-stats/v1.0.0/response.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-stats/tree/stable-v1"
+    />
+    <xs:import
+            schemaLocation="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-imobility-tor-stats/v1.0.0/manifest-entry.xsd"
+            namespace="https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-stats/blob/stable-v1/manifest-entry.xsd"
     />
 
 

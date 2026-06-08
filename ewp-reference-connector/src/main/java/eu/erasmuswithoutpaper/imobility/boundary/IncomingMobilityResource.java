@@ -144,7 +144,7 @@ public class IncomingMobilityResource {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         for (String omobilityId : omobilityIds) {
-            String url = properties.getAlgoriaOmobilityByIDUrl(heiId, omobilityId);
+            String url = properties.getAlgoriaImobilityByIDUrl(heiId, omobilityId);
             LOG.fine("Algoria GET URL: " + url);
             WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
             Response algoriaResponse = target.request().header("Authorization", token).get();

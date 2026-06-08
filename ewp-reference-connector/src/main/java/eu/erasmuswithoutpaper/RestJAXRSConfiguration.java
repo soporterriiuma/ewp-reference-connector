@@ -30,13 +30,14 @@ public class RestJAXRSConfiguration extends Application {
         resources.add(CoursesResourceReplication.class);
         
         resources.add(OrganizationUnitResource.class);
-        //resources.add(LosResource.class);
+
         resources.add(OutgoingMobilityResource.class);
         resources.add(IncomingMobilityResource.class);
 
         resources.add(IiaResource.class);
         resources.add(IiaApprovalResource.class);
         resources.add(FactsheetResource.class);
+
         resources.add(OutgoingMobilityLearningAgreementsResource.class);
         
         resources.add(TestMonitoringEndpoint.class);

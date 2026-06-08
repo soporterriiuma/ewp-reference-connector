@@ -6,5 +6,19 @@
     <system
         systemId="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-omobility-las/stable-v1/endpoints/get-response.xsd"
         uri="get-response.xsd"/>
-    
+    <system
+        systemId="https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-architecture/stable-v1/common-types.xsd"
+        uri="patched-schemas/ewp-architecture/common-types.xsd"/>
+    <system
+        systemId="https://raw.githubusercontent.com/emrex-eu/elmo-schemas/v2.1.1/schema.xsd"
+        uri="patched-schemas/emrex/schema.xsd"/>
+    <system
+        systemId="https://raw.githubusercontent.com/emrex-eu/elmo-schemas/v2.1.2/schema.xsd"
+        uri="patched-schemas/emrex/schema.xsd"/>
+    <system
+        systemId="https://raw.githubusercontent.com/emrex-eu/elmo-schemas/v2/references/xmldsig-core-schema.xsd"
+        uri="patched-schemas/emrex/xmldsig-core-schema.xsd"/>
+    <system
+        systemId="https://raw.githubusercontent.com/emrex-eu/elmo-schemas/v2/references/EUROPASS_ISOCountries_V1.1.xsd"
+        uri="patched-schemas/emrex/EUROPASS_ISOCountries_V1.1.xsd"/>
 </catalog>

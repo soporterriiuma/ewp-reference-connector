@@ -44,6 +44,7 @@ import eu.erasmuswithoutpaper.iia.entity.Iia;
 import eu.erasmuswithoutpaper.notification.entity.Notification;
 import eu.erasmuswithoutpaper.notification.entity.NotificationTypes;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
+import eu.erasmuswithoutpaper.security.InternalAuthenticate;
 
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -88,6 +89,14 @@ public class IiaResource {
         return iiaIndex(receiving_academic_year_id, modified_since);
     }
 
+    @GET
+    @Path("index_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response indexGet(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @QueryParam("modified_since") List<String> modified_since, @QueryParam("hei_id") String heiId) {
+        return iiaIndex(heiId, receiving_academic_year_id, modified_since);
+    }
+
     private javax.ws.rs.core.Response iiaIndex(List<String> receiving_academic_year_id, List<String> modified_since) {
 
         Collection<String> heisCoveredByCertificate;
@@ -103,6 +112,10 @@ public class IiaResource {
 
         String senderHeiId = heisCoveredByCertificate.iterator().next();
 
+        return iiaIndex(senderHeiId, receiving_academic_year_id, modified_since);
+    }
+
+    private javax.ws.rs.core.Response iiaIndex(String senderHeiId, List<String> receiving_academic_year_id, List<String> modified_since) {
         if (modified_since != null && modified_since.size() > 1) {
             throw new EwpWebApplicationException("Not allow more than one value of modified_since", Response.Status.BAD_REQUEST);
         }
@@ -131,10 +144,10 @@ public class IiaResource {
 
         if(!filteredIiaList.isEmpty()){
             filteredIiaList = filteredIiaList.stream().filter(iia ->
-                iia.getCooperationConditions().stream().anyMatch(c ->
-                    senderHeiId.equals(c.getReceivingPartner().getInstitutionId()) ||
-                    senderHeiId.equals(c.getSendingPartner().getInstitutionId())
-                )
+                    iia.getCooperationConditions().stream().anyMatch(c ->
+                            senderHeiId.equals(c.getReceivingPartner().getInstitutionId()) ||
+                                    senderHeiId.equals(c.getSendingPartner().getInstitutionId())
+                    )
             ).collect(Collectors.toList());
         }
 

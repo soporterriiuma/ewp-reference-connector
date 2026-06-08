@@ -32,8 +32,9 @@ public class EwpConstants {
     public static final String OUTGOING_MOBILITIES_LAS_VERSION = "1.2.0";
     public static final String INCOMING_MOBILITIES_VERSION = "2.0.0";
     public static final String INCOMING_MOBILITY_CNR_VERSION = "2.0.0";
-    public static final String INCOMING_MOBILITIES_TORS_VERSION = "0.7.0";
-    public static final String INCOMING_MOBILITY_TORS_CNR_VERSION = "0.1.0";
+    public static final String INCOMING_MOBILITIES_TORS_VERSION = "3.0.0";
+    public static final String INCOMING_MOBILITY_TORS_CNR_VERSION = "2.0.0";
+    public static final String INCOMING_MOBILITY_TORS_STATS_VERSION = "1.0.0";
     public static final String IIAS_VERSION = "7.0.0";
     public static final String IIA_CNR_VERSION = "3.0.0";
     public static final String IIAS_APPROVAL_VERSION = "2.0.0";
@@ -51,8 +52,9 @@ public class EwpConstants {
     public static final String OUTGOING_MOBILITIES_LA_CNR_CLIENT_VERSION = "1.0.0";
     public static final String INCOMING_MOBILITIES_CLIENT_VERSION = "0.1.0";
     public static final String INCOMING_MOBILITY_CNR_CLIENT_VERSION = "0.1.0";
-    public static final String INCOMING_MOBILITIES_TORS_CLIENT_VERSION = "0.7.0";
-    public static final String INCOMING_MOBILITY_TORS_CNR_CLIENT_VERSION = "0.1.0";
+    public static final String INCOMING_MOBILITIES_TORS_CLIENT_VERSION = "3.0.0";
+    public static final String INCOMING_MOBILITY_TORS_CNR_CLIENT_VERSION = "2.0.0";
+    public static final String INCOMING_MOBILITY_TORS_STATS_CLIENT_VERSION = "1.0.0";
     public static final String IIAS_CLIENT_VERSION = "7.0.0";
     public static final String IIA_CNR_CLIENT_VERSION = "3.0.0";
     public static final String IIAS_APPROVAL_CLIENT_VERSION = "2.0.0";

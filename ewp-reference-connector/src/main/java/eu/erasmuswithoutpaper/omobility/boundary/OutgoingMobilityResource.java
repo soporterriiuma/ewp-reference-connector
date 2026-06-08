@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.architecture.MultilineStringWithOptionalLang;
+import eu.erasmuswithoutpaper.api.imobilities.tors.stats.ImobilityTorStats;
 import eu.erasmuswithoutpaper.api.omobilities.endpoints.*;
 import eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.stats.LasIncomingStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.*;
@@ -295,7 +296,7 @@ public class OutgoingMobilityResource {
                 }
             }
 
-            OmobilityStatsResponse response = mapper.convertValue(root, OmobilityStatsResponse.class);
+            ImobilityTorStats response = mapper.convertValue(root, ImobilityTorStats.class);
             LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
