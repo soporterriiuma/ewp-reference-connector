@@ -489,6 +489,13 @@ public class OutgoingMobilityResource {
                 if (omobilityNode.isObject()) {
                     ObjectNode laObject = (ObjectNode) omobilityNode;
 
+                    normalizeMobilityStatus(laObject);
+                    //normalizeReceivingHeiContactPerson(laObject);
+                    //normalizeDates(laObject);
+                    //normalizeComponents(laObject.get("firstVersion"));
+                    //normalizeComponents(laObject.get("approvedChanges"));
+                    //normalizeComponents(laObject.get("changesProposal"));
+
                     StudentMobility la = mapper.treeToValue(laObject, StudentMobility.class);
                     stripDateTimezones(la);
                     response.getSingleMobilityObject().add(la);
@@ -601,6 +608,13 @@ public class OutgoingMobilityResource {
                 receivingHeiObj.set("contactPerson", contactPerson);
                 receivingHeiObj.remove("contact-person");
             }
+        }
+    }
+
+    private void normalizeMobilityStatus(ObjectNode laObject) {
+        JsonNode status = laObject.get("status");
+        if (status != null && status.isTextual()) {
+            laObject.put("status", status.asText().toUpperCase(Locale.ROOT));
         }
     }
 
