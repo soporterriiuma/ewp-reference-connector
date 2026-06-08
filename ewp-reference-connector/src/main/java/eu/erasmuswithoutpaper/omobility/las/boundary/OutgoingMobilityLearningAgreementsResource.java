@@ -74,14 +74,9 @@ import java.io.IOException;
 @Path("omobilities/las")
 public class OutgoingMobilityLearningAgreementsResource {
 
-    @EJB
-    LearningAgreementEJB learningAgreementEJB;
-
     @Inject
     GlobalProperties properties;
 
-    @Inject
-    OutgoingMobilityLearningAgreementsConverter converter;
 
     @Inject
     RegistryClient registryClient;
@@ -91,9 +86,6 @@ public class OutgoingMobilityLearningAgreementsResource {
 
     @Inject
     OmobilitiesLasAuxThread ait;
-
-    @Inject
-    RestClient restClient;
 
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(OutgoingMobilityLearningAgreementsResource.class.getCanonicalName());
 

@@ -13,6 +13,7 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import java.util.*;
@@ -31,6 +32,43 @@ public class IiasEJB {
 
     public List<Iia> findAll() {
         return em.createNamedQuery(Iia.findAll).getResultList();
+    }
+
+    public List<String> findIndexIds(String senderHeiId, List<String> receivingAcademicYearIds, Date modifiedSince) {
+        StringBuilder jpql = new StringBuilder();
+        jpql.append("SELECT DISTINCT i.id FROM Iia i ");
+        jpql.append("JOIN i.cooperationConditions cc ");
+        jpql.append("JOIN cc.sendingPartner sp ");
+        jpql.append("JOIN cc.receivingPartner rp ");
+
+        boolean filterByAcademicYear = receivingAcademicYearIds != null && !receivingAcademicYearIds.isEmpty();
+        if (filterByAcademicYear) {
+            jpql.append("JOIN cc.receivingAcademicYearId ray ");
+        }
+
+        jpql.append("WHERE i.original IS NULL ");
+        jpql.append("AND (sp.institutionId = :senderHeiId OR rp.institutionId = :senderHeiId) ");
+
+        if (filterByAcademicYear) {
+            jpql.append("AND ray IN :receivingAcademicYearIds ");
+        }
+
+        if (modifiedSince != null) {
+            jpql.append("AND (i.modifyDate IS NULL OR i.modifyDate > :modifiedSince) ");
+        }
+
+        TypedQuery<String> query = em.createQuery(jpql.toString(), String.class)
+                .setParameter("senderHeiId", senderHeiId);
+
+        if (filterByAcademicYear) {
+            query.setParameter("receivingAcademicYearIds", receivingAcademicYearIds);
+        }
+
+        if (modifiedSince != null) {
+            query.setParameter("modifiedSince", modifiedSince);
+        }
+
+        return query.getResultList();
     }
 
     public Iia findById(String iiaId) {
