@@ -265,6 +265,7 @@ public class OutgoingMobilityResource {
 
         Response algoriaResponse = ClientBuilder.newBuilder().build().target(url.trim()).request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
+        LOG.info("Algoria stats raw body:\n" + rawBody);
         try {
             LOG.info("Algoria stats response status=" + algoriaResponse.getStatus());
             if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
