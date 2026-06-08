@@ -158,7 +158,7 @@ public class ManifestResource {
         
         institution.getName().stream().map((name) -> {
             StringWithOptionalLang swolName = new StringWithOptionalLang();
-            swolName.setLang(name.getLang());
+            //swolName.setLang(name.getLang());
             swolName.setValue(name.getText());
             return swolName;
         }).forEachOrdered((name) -> {
