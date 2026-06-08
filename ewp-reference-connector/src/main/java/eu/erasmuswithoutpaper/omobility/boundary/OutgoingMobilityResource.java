@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
 import eu.erasmuswithoutpaper.api.architecture.MultilineStringWithOptionalLang;
 import eu.erasmuswithoutpaper.api.imobilities.tors.stats.ImobilityTorStats;
+import eu.erasmuswithoutpaper.api.imobilities.tors.stats.ImobilityTorStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.endpoints.*;
 import eu.erasmuswithoutpaper.api.omobilities.las.cnr.endpoints.stats.LasIncomingStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.*;
@@ -254,7 +255,7 @@ public class OutgoingMobilityResource {
     @GET
     @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
+    //@EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
         LOG.info("---- START /omobilities/stats ----");
 
@@ -274,29 +275,27 @@ public class OutgoingMobilityResource {
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
             JsonNode root = mapper.readTree(rawBody);
-            JsonNode statsNode = root.get("academicYearLaStats");
-            if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
-                ((ObjectNode) root).set("academicYearLaStats", statsNode.get(0));
-                statsNode = root.get("academicYearLaStats");
-            }
+            JsonNode statsNode = root.get("academicYearNominationStats");
+
+            OmobilityStatsResponse response = new OmobilityStatsResponse();
             if (statsNode != null && statsNode.isArray()) {
                 for (JsonNode statNode : statsNode) {
                     if (statNode.isObject()) {
-                        ObjectNode statObject = (ObjectNode) statNode;
+                        OmobilityStatsResponse.AcademicYearStats academicYearStats = new OmobilityStatsResponse.AcademicYearStats();
+
                         JsonNode yearNode = statNode.get("receivingAcademicYearId");
                         if (yearNode != null && yearNode.isTextual()) {
-                            statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
+                            academicYearStats.setReceivingAcademicYearId(normalizeAcademicYearId(yearNode.asText()));
                         }
 
-                        BigInteger someVersionApproved = readBigInteger(statNode.get("laIncomingSomeVersionApproved"));
-                        if (someVersionApproved != null) {
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
-                        }
+                        academicYearStats.setOmobilityPending(orZero(readBigInteger(statNode.get("nominationOutgoingPending"))));
+                        academicYearStats.setOmobilityApproved(orZero(readBigInteger(statNode.get("nominationOutgoingApproved"))));
+
+                        response.getAcademicYearStats().add(academicYearStats);
                     }
                 }
             }
 
-            ImobilityTorStats response = mapper.convertValue(root, ImobilityTorStats.class);
             LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
@@ -336,12 +335,10 @@ public class OutgoingMobilityResource {
         String modifiedSince;
 
 
-        String fistYear = null;
         if (receivingAcademicYearIds.size() > 1) {
             throw new EwpWebApplicationException("Too many receiving_academic_year_id parameters.", Response.Status.BAD_REQUEST);
         } else if (!receivingAcademicYearIds.isEmpty()) {
             receivingAcademicYearId = receivingAcademicYearIds.get(0);
-            fistYear = receivingAcademicYearId.split("/")[0];
         } else {
             receivingAcademicYearId = null;
         }
@@ -400,14 +397,14 @@ public class OutgoingMobilityResource {
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
 
-        if (fistYear != null) {
-            target = target.queryParam("receiving_academic_year", fistYear);
+        if (receivingAcademicYearId != null) {
+            target = target.queryParam("receiving_academic_year", receivingAcademicYearId);
         }
         if (globalId != null) {
-            target = target.queryParam("student_id", globalId);
+            target = target.queryParam("global_id", globalId);
         }
         if (activityAttribute != null) {
-            target = target.queryParam("activity_attribute", activityAttribute);
+            target = target.queryParam("activity_attributes", activityAttribute);
         }
         if (modifiedSince != null) {
             target = target.queryParam("modified_since", modifiedSince);
@@ -824,5 +821,9 @@ public class OutgoingMobilityResource {
             }
         }
         return null;
+    }
+
+    private static BigInteger orZero(BigInteger value) {
+        return value != null ? value : BigInteger.ZERO;
     }
 }
