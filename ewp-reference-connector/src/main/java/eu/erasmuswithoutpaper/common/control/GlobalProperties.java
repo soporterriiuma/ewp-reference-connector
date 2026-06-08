@@ -356,6 +356,19 @@ public class GlobalProperties {
         return base + heiId + "/" + mobilityId + "/";
     }
 
+    public String getAlgoriaOmobilityUpdateUrl(String heiId) {
+        String base = defaultAlgoriaOmobilityUrl;
+        try {
+            base = configEJB.getValue("algoria.omobility.url", defaultAlgoriaOmobilityUrl);
+        } catch (Exception e) {
+            base = defaultAlgoriaOmobilityUrl;
+        }
+        if (!base.endsWith("/")) {
+            base = base + "/";
+        }
+        return base + heiId + "/update/";
+    }
+
     public String getAlgoriaOmobilityNotifyUrl(String heiId, String imobilityId) {
         String base = getProperty("algoria.omobility.notify.url", defaultAlgoriaOmobilityUrl);
         if (!base.endsWith("/")) {

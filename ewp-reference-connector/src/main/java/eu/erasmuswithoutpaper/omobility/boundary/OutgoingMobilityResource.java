@@ -139,6 +139,20 @@ public class OutgoingMobilityResource {
 
         String heiId = heisCoveredByCertificate.iterator().next();
 
+        return handleOmobilityUpdate(request, heiId);
+    }
+
+    @POST
+    @Path("update_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoria(OmobilitiesUpdateRequest request, @QueryParam("hei_id") String heiId) {
+        LOG.info("---- START /omobilities/update ----");
+        return omobilityLasUpdatePostAlgoria(request);
+
+    }
+
+    private Response handleOmobilityUpdate(OmobilitiesUpdateRequest request, String heiId) {
         String omobilityId = null;
         String action = null;
         if (request.getApproveProposalV1() != null) {
@@ -149,11 +163,15 @@ public class OutgoingMobilityResource {
             action = "reject";
         }
 
+        if (action == null) {
+            throw new EwpWebApplicationException("Mising required parameter, approve-proposal-v1 and comment-proposal-v1 both of them can not be missing", Response.Status.BAD_REQUEST);
+        }
+
         if (omobilityId == null || omobilityId.isEmpty()) {
             throw new EwpWebApplicationException("Mising required parameter, omobility-id is required", Response.Status.BAD_REQUEST);
         }
 
-        String url = properties.getAlgoriaOmobilityByIDUrl(heiId, omobilityId) + action + "/";
+        String url = properties.getAlgoriaOmobilityUpdateUrl(heiId);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -174,24 +192,10 @@ public class OutgoingMobilityResource {
                     .header("Authorization", token)
                     .post(Entity.json(json));
             try {
-                String rawBody = algoriaResponse.readEntity(String.class);
                 if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                    String rawBody = algoriaResponse.readEntity(String.class);
                     LOG.warning("Algoria update failed. HTTP " + algoriaResponse.getStatus() + ". Response body:\n" + rawBody);
                     throw new EwpWebApplicationException("Update failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
-                }
-                try {
-                    JsonNode respNode = mapper.readTree(rawBody);
-                    JsonNode successNode = respNode.get("success");
-                    if (successNode == null || !successNode.isBoolean()) {
-                        throw new EwpWebApplicationException("Update failed.", Response.Status.BAD_GATEWAY);
-                    }
-                    if (!successNode.asBoolean()) {
-                        throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
-                    }
-                } catch (EwpWebApplicationException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new EwpWebApplicationException("Update failed", Response.Status.BAD_GATEWAY);
                 }
             } finally {
                 algoriaResponse.close();
@@ -255,7 +259,7 @@ public class OutgoingMobilityResource {
     @GET
     @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
-    //@EwpAuthenticate
+    @EwpAuthenticate
     public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
         LOG.info("---- START /omobilities/stats ----");
 
