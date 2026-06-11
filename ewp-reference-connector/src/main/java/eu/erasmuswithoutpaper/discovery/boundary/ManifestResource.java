@@ -169,7 +169,7 @@ public class ManifestResource {
 
     private MultilineString getAdminNotes() {
         MultilineString multilineString = new MultilineString();
-        multilineString.setValue("This is a EWP reference connector instance.");
+        multilineString.setValue("University of Malaga EWP Node.");
         return multilineString;
     }
     

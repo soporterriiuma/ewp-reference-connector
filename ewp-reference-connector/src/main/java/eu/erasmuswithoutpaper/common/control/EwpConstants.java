@@ -48,7 +48,7 @@ public class EwpConstants {
     public static final String COURSES_CLIENT_VERSION = "0.7.0";
     public static final String COURSE_REPLICATION_CLIENT_VERSION = "1.0.0";
     public static final String OUTGOING_MOBILITIES_CLIENT_VERSION = "1.0.0";
-    public static final String OUTGOING_MOBILITIES_CNR_CLIENT_VERSION = "1.0.0";
+    public static final String OUTGOING_MOBILITIES_CNR_CLIENT_VERSION = "1.1.0";
     public static final String OUTGOING_MOBILITIES_LA_CNR_CLIENT_VERSION = "1.0.0";
     public static final String INCOMING_MOBILITIES_CLIENT_VERSION = "0.1.0";
     public static final String INCOMING_MOBILITY_CNR_CLIENT_VERSION = "0.1.0";
