@@ -159,7 +159,7 @@ public class OutgoingMobilityResource {
             omobilityId = request.getApproveProposalV1().getOmobilityId();
             action = "approve";
         } else if (request.getRejectProposalV1() != null) {
-            omobilityId = request.getApproveProposalV1().getOmobilityId();
+            omobilityId = request.getRejectProposalV1().getOmobilityId();
             action = "reject";
         }
 
