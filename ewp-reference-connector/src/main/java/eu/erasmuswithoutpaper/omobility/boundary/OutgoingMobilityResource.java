@@ -148,7 +148,7 @@ public class OutgoingMobilityResource {
     @InternalAuthenticate
     public javax.ws.rs.core.Response omobilityLasUpdatePostAlgoria(OmobilitiesUpdateRequest request, @QueryParam("hei_id") String heiId) {
         LOG.info("---- START /omobilities/update ----");
-        return omobilityLasUpdatePostAlgoria(request);
+        return omobilityLasUpdatePostAlgoria(request, heiId);
 
     }
 
