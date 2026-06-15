@@ -814,7 +814,7 @@ public class GuiOutgoingMobilityLearningAgreementsResourceREAL {
             paramsClass.setUnknownFields(paramsMap);
             clientRequest.setParams(paramsClass);
 
-            ClientResponse cnrResponse = restClient.sendRequest(clientRequest, Empty.class);
+            ClientResponse cnrResponse = restClient.sendRequest(clientRequest, String.class);
             LOG.fine("CNR: response: " + cnrResponse.getRawResponse());
 
             try {

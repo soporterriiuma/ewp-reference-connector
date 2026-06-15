@@ -225,6 +225,16 @@ public class RegistryClient {
         return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_CNR_NAMESPACE, "imobility-cnr", EwpConstants.INCOMING_MOBILITY_CNR_CLIENT_VERSION);
     }
 
+    public List<HeiEntry> getImobilityTorsHeisWithUrls() {
+        List<HeiEntry> heis = getHeis(EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", EwpConstants.INCOMING_MOBILITIES_TORS_CLIENT_VERSION);
+        heis.stream().forEach(hei -> hei.setUrls(getImobilityTorsCnrHeiUrls(hei.getId())));
+        return heis;
+    }
+
+    public Map<String, String> getImobilityTorsHeiUrls(String heiId) {
+        return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", EwpConstants.INCOMING_MOBILITIES_TORS_CLIENT_VERSION);
+    }
+
     public List<HeiEntry> getImobilityTorsCnrHeisWithUrls() {
         List<HeiEntry> heis = getHeis(EwpConstants.INCOMING_MOBILITIES_TORS_CNR_NAMESPACE, "imobility-tor-cnr", EwpConstants.INCOMING_MOBILITY_TORS_CNR_CLIENT_VERSION);
         heis.stream().forEach(hei -> hei.setUrls(getImobilityTorsCnrHeiUrls(hei.getId())));
