@@ -176,7 +176,8 @@ public class IncomingMobilityTorsResource {
                     if (statNode.isObject()) {
                         ImobilityTorStatsResponse.AcademicYearStats academicYearStats =
                                 new ImobilityTorStatsResponse.AcademicYearStats();
-                        academicYearStats.setReceivingAcademicYearId(readText(statNode.get("receivingAcademicYearId")));
+                        academicYearStats.setReceivingAcademicYearId(
+                                normalizeAcademicYearId(readText(statNode.get("receivingAcademicYearId"))));
                         academicYearStats.setImobilityTorTotal(readBigInteger(statNode.get("imobilityTorTotal")));
                         response.getAcademicYearStats().add(academicYearStats);
                     }
@@ -437,6 +438,23 @@ public class IncomingMobilityTorsResource {
 
         int startYear = dateTime.getMonthValue() >= 8 ? dateTime.getYear() : dateTime.getYear() - 1;
         return startYear + "/" + (startYear + 1);
+    }
+
+    private String normalizeAcademicYearId(String value) {
+        if (isBlank(value)) {
+            return value;
+        }
+
+        String trimmed = value.trim();
+        if (trimmed.matches("\\d{4}/\\d{4}")) {
+            return trimmed;
+        }
+        if (trimmed.matches("\\d{4}/\\d{2}")) {
+            String[] parts = trimmed.split("/");
+            String century = parts[0].substring(0, 2);
+            return parts[0] + "/" + century + parts[1];
+        }
+        return trimmed;
     }
 
     private String firstNonBlank(String first, String second) {
