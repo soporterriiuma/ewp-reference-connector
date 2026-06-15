@@ -17,8 +17,8 @@ public class EwpConstants {
     public static final String OUTGOING_MOBILITIES_CNR_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-omobility-cnr/blob/stable-v1/manifest-entry.xsd";
     public static final String INCOMING_MOBILITIES_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-imobilities/blob/stable-v1/manifest-entry.xsd";
     public static final String INCOMING_MOBILITIES_CNR_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-cnr/blob/stable-v1/manifest-entry.xsd";
-    public static final String INCOMING_MOBILITIES_TORS_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v1/manifest-entry.xsd";
-    public static final String INCOMING_MOBILITIES_TORS_CNR_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/blob/stable-v1/manifest-entry.xsd";
+    public static final String INCOMING_MOBILITIES_TORS_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v3/manifest-entry.xsd";
+    public static final String INCOMING_MOBILITIES_TORS_CNR_NAMESPACE = "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tor-cnr/blob/stable-v2/manifest-entry.xsd";
     
     public static final String ECHO_VERSION = "2.0.1";
     public static final String INSTITUTION_VERSION = "2.2.0";
