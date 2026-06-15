@@ -1,12 +1,15 @@
 package eu.erasmuswithoutpaper.imobility.tor.boundary;
 
+import eu.emrex.elmo.Attachment;
+import eu.emrex.elmo.Elmo;
+import eu.emrex.elmo.Issuer;
+import eu.emrex.elmo.LearningOpportunitySpecification;
+import eu.emrex.elmo.TokenWithOptionalLang;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
-import eu.erasmuswithoutpaper.api.imobilities.endpoints.ImobilitiesGetResponse;
-import eu.erasmuswithoutpaper.api.imobilities.endpoints.StudentMobility;
 import eu.erasmuswithoutpaper.api.imobilities.tors.endpoints.ImobilityTorsGetResponse;
 import eu.erasmuswithoutpaper.api.imobilities.tors.endpoints.ImobilityTorsIndexResponse;
 import eu.erasmuswithoutpaper.api.imobilities.tors.stats.ImobilityTorStatsResponse;
@@ -14,6 +17,7 @@ import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.OmobilityLasIndexRes
 import eu.erasmuswithoutpaper.common.control.GlobalProperties;
 import eu.erasmuswithoutpaper.common.control.RegistryClient;
 import eu.erasmuswithoutpaper.error.control.EwpWebApplicationException;
+import eu.erasmuswithoutpaper.imobility.tor.dto.AlgoriaImobilityTorGetDto;
 import eu.erasmuswithoutpaper.imobility.tor.dto.AlgoriaImobilityTorIndexDto;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
 import eu.erasmuswithoutpaper.security.InternalAuthenticate;
@@ -27,6 +31,10 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -141,8 +149,8 @@ public class IncomingMobilityTorsResource {
     @GET
     @Path("stats")
     @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
-    public javax.ws.rs.core.Response omobilityGetStatsAlgoria() {
+    //@EwpAuthenticate
+    public javax.ws.rs.core.Response imobilityGetStatsAlgoria() {
         LOG.info("---- START /imobilities/tors/stats ----");
 
         String url = properties.getAlgoriaImobilityTorStatsUrl();
@@ -161,29 +169,20 @@ public class IncomingMobilityTorsResource {
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
             JsonNode root = mapper.readTree(rawBody);
-            JsonNode statsNode = root.get("academicYearLaStats");
-            if (statsNode != null && statsNode.isArray() && statsNode.size() == 1 && statsNode.get(0).isArray()) {
-                ((ObjectNode) root).set("academicYearLaStats", statsNode.get(0));
-                statsNode = root.get("academicYearLaStats");
-            }
-            /*if (statsNode != null && statsNode.isArray()) {
+            JsonNode statsNode = root.get("academicYearTorStats");
+            ImobilityTorStatsResponse response = new ImobilityTorStatsResponse();
+            if (statsNode != null && statsNode.isArray()) {
                 for (JsonNode statNode : statsNode) {
                     if (statNode.isObject()) {
-                        ObjectNode statObject = (ObjectNode) statNode;
-                        JsonNode yearNode = statNode.get("receivingAcademicYearId");
-                        if (yearNode != null && yearNode.isTextual()) {
-                            statObject.put("receivingAcademicYearId", normalizeAcademicYearId(yearNode.asText()));
-                        }
-
-                        BigInteger someVersionApproved = readBigInteger(statNode.get("laIncomingSomeVersionApproved"));
-                        if (someVersionApproved != null) {
-                            statObject.put("laIncomingSomeVersionApproved", someVersionApproved.toString());
-                        }
+                        ImobilityTorStatsResponse.AcademicYearStats academicYearStats =
+                                new ImobilityTorStatsResponse.AcademicYearStats();
+                        academicYearStats.setReceivingAcademicYearId(readText(statNode.get("receivingAcademicYearId")));
+                        academicYearStats.setImobilityTorTotal(readBigInteger(statNode.get("imobilityTorTotal")));
+                        response.getAcademicYearStats().add(academicYearStats);
                     }
                 }
-            }*/
+            }
 
-            ImobilityTorStatsResponse response = mapper.convertValue(root, ImobilityTorStatsResponse.class);
             LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
@@ -236,24 +235,231 @@ public class IncomingMobilityTorsResource {
             Response algoriaResponse = target.request().header("Authorization", token).get();
             String rawBody = algoriaResponse.readEntity(String.class);
             try {
-                JsonNode root = mapper.readTree(rawBody);
+                if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                    throw new EwpWebApplicationException("TOR get request failed. HTTP " + algoriaResponse.getStatus(),
+                            Response.Status.BAD_GATEWAY);
+                }
 
-                JsonNode laNode = root.get("tor");
-                if (laNode != null && laNode.isObject()) {
-                    ObjectNode laObject = (ObjectNode) laNode;
-
-                    ImobilityTorsGetResponse.Tor tor = mapper.treeToValue(laObject, ImobilityTorsGetResponse.Tor.class);
+                AlgoriaImobilityTorGetDto dto = mapper.readValue(rawBody, AlgoriaImobilityTorGetDto.class);
+                if (dto.getTor() != null) {
+                    ImobilityTorsGetResponse.Tor tor = toTorResponse(dto.getTor(), omobilityId);
                     response.getTor().add(tor);
                 }
+            } catch (EwpWebApplicationException e) {
+                LOG.warning("Algoria TOR get failed with known error: " + e.getMessage());
+                throw e;
             } catch (Exception e) {
                 LOG.warning("Algoria get response (" + algoriaResponse.getStatus() + ") for " + omobilityIds + " raw:\n" + rawBody);
                 LOG.warning("Algoria get parse error for " + omobilityIds + ": " + e.getMessage());
+                throw new EwpWebApplicationException("TOR get request failed", Response.Status.BAD_GATEWAY);
             } finally {
                 algoriaResponse.close();
             }
         }
 
         return Response.ok(response).build();
+    }
+
+    private ImobilityTorsGetResponse.Tor toTorResponse(AlgoriaImobilityTorGetDto.Tor source, String fallbackOmobilityId)
+            throws DatatypeConfigurationException {
+        ImobilityTorsGetResponse.Tor tor = new ImobilityTorsGetResponse.Tor();
+        tor.setOmobilityId(firstNonBlank(source.getOmobilityId(), fallbackOmobilityId));
+        tor.setReceivingAcademicYearId(firstNonBlank(source.getReceivingAcademicYearId(),
+                academicYearFrom(source.getTorAvailableSince())));
+        tor.setElmo(toElmo(source));
+        return tor;
+    }
+
+    private Elmo toElmo(AlgoriaImobilityTorGetDto.Tor source) throws DatatypeConfigurationException {
+        XMLGregorianCalendar issueDate = toXmlDateTime(source.getTorAvailableSince());
+
+        Elmo elmo = new Elmo();
+        elmo.setGeneratedDate(issueDate);
+        elmo.setLearner(toLearner(source.getLearner()));
+
+        Elmo.Report report = new Elmo.Report();
+        report.setIssuer(toIssuer(source.getIssuer()));
+        report.setIssueDate(issueDate);
+
+        if (source.getLearningOutcomes() != null) {
+            for (AlgoriaImobilityTorGetDto.LearningOutcome learningOutcome : source.getLearningOutcomes()) {
+                report.getLearningOpportunitySpecification().add(toLearningOpportunitySpecification(learningOutcome));
+            }
+        }
+
+        if (!isBlank(source.getAttachment())) {
+            report.getAttachment().add(toAttachment(source.getAttachment()));
+        }
+
+        elmo.getReport().add(report);
+        return elmo;
+    }
+
+    private Elmo.Learner toLearner(AlgoriaImobilityTorGetDto.Learner source) throws DatatypeConfigurationException {
+        Elmo.Learner learner = new Elmo.Learner();
+        if (source == null) {
+            return learner;
+        }
+
+        learner.setGivenNames(source.getGivenNames());
+        learner.setFamilyName(source.getFamilyName());
+        if (!isBlank(source.getBirthDate())) {
+            learner.setDateOfBirth(toXmlDate(source.getBirthDate()));
+        }
+        if (!isBlank(source.getGlobalId())) {
+            Elmo.Learner.Identifier identifier = new Elmo.Learner.Identifier();
+            identifier.setType("esi");
+            identifier.setValue(source.getGlobalId());
+            learner.getIdentifier().add(identifier);
+        }
+        return learner;
+    }
+
+    private Issuer toIssuer(AlgoriaImobilityTorGetDto.Issuer source) {
+        Issuer issuer = new Issuer();
+        if (source == null) {
+            return issuer;
+        }
+
+        if (!isBlank(source.getCountry())) {
+            Issuer.Country country = new Issuer.Country();
+            country.setType("iso-3166-1-alpha-2");
+            country.setValue(source.getCountry());
+            issuer.setCountry(country);
+        }
+        addIssuerIdentifier(issuer, "schac", source.getHeiId());
+        addIssuerIdentifier(issuer, "erasmus", source.getErasmusCode());
+        addIssuerIdentifier(issuer, "pic", source.getPic());
+        if (!isBlank(source.getName())) {
+            issuer.getTitle().add(token(source.getName(), null));
+        }
+        issuer.setUrl(source.getUrl());
+        return issuer;
+    }
+
+    private LearningOpportunitySpecification toLearningOpportunitySpecification(
+            AlgoriaImobilityTorGetDto.LearningOutcome source) {
+        LearningOpportunitySpecification specification = new LearningOpportunitySpecification();
+        addLosIdentifier(specification, "ewp-los-id", source.getLosId());
+        addLosIdentifier(specification, "local-code", source.getLosCode());
+        if (!isBlank(source.getTitle())) {
+            specification.getTitle().add(token(source.getTitle(), null));
+        }
+        if (!isBlank(source.getTitleEn())) {
+            specification.getTitle().add(token(source.getTitleEn(), "en"));
+        }
+        specification.setType("Course");
+
+        LearningOpportunitySpecification.Specifies specifies = new LearningOpportunitySpecification.Specifies();
+        LearningOpportunitySpecification.Specifies.LearningOpportunityInstance instance =
+                new LearningOpportunitySpecification.Specifies.LearningOpportunityInstance();
+        addLoiIdentifier(instance, "ewp-loi-id", source.getLoiId());
+        addLoiIdentifier(instance, "local-code", source.getLoiCode());
+        instance.setStatus("passed");
+        instance.setResultLabel(firstNonBlank(source.getAnnouncement(),
+                source.getGradeNumeric() == null ? null : source.getGradeNumeric().toPlainString()));
+        if (source.getCredits() != null) {
+            LearningOpportunitySpecification.Specifies.LearningOpportunityInstance.Credit credit =
+                    new LearningOpportunitySpecification.Specifies.LearningOpportunityInstance.Credit();
+            credit.setScheme("ECTS");
+            credit.setValue(source.getCredits());
+            instance.getCredit().add(credit);
+        }
+
+        specifies.setLearningOpportunityInstance(instance);
+        specification.setSpecifies(specifies);
+        return specification;
+    }
+
+    private Attachment toAttachment(String content) {
+        Attachment attachment = new Attachment();
+        attachment.setType("Transcript of Records");
+        attachment.getTitle().add(token("Transcript of Records", "en"));
+        attachment.getContent().add(token(content, null));
+        return attachment;
+    }
+
+    private void addIssuerIdentifier(Issuer issuer, String type, String value) {
+        if (isBlank(value)) {
+            return;
+        }
+        Issuer.Identifier identifier = new Issuer.Identifier();
+        identifier.setType(type);
+        identifier.setValue(value);
+        issuer.getIdentifier().add(identifier);
+    }
+
+    private void addLosIdentifier(LearningOpportunitySpecification specification, String type, String value) {
+        if (isBlank(value)) {
+            return;
+        }
+        LearningOpportunitySpecification.Identifier identifier = new LearningOpportunitySpecification.Identifier();
+        identifier.setType(type);
+        identifier.setValue(value);
+        specification.getIdentifier().add(identifier);
+    }
+
+    private void addLoiIdentifier(LearningOpportunitySpecification.Specifies.LearningOpportunityInstance instance,
+                                  String type, String value) {
+        if (isBlank(value)) {
+            return;
+        }
+        LearningOpportunitySpecification.Specifies.LearningOpportunityInstance.Identifier identifier =
+                new LearningOpportunitySpecification.Specifies.LearningOpportunityInstance.Identifier();
+        identifier.setType(type);
+        identifier.setValue(value);
+        instance.getIdentifier().add(identifier);
+    }
+
+    private TokenWithOptionalLang token(String value, String lang) {
+        TokenWithOptionalLang token = new TokenWithOptionalLang();
+        token.setValue(value);
+        token.setLang(lang);
+        return token;
+    }
+
+    private XMLGregorianCalendar toXmlDateTime(String value) throws DatatypeConfigurationException {
+        String dateTime = firstNonBlank(value, OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        return DatatypeFactory.newInstance().newXMLGregorianCalendar(dateTime);
+    }
+
+    private XMLGregorianCalendar toXmlDate(String value) throws DatatypeConfigurationException {
+        return DatatypeFactory.newInstance().newXMLGregorianCalendar(value);
+    }
+
+    private String academicYearFrom(String dateTimeValue) {
+        OffsetDateTime dateTime;
+        try {
+            dateTime = OffsetDateTime.parse(dateTimeValue, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        } catch (Exception e) {
+            dateTime = OffsetDateTime.now();
+        }
+
+        int startYear = dateTime.getMonthValue() >= 8 ? dateTime.getYear() : dateTime.getYear() - 1;
+        return startYear + "/" + (startYear + 1);
+    }
+
+    private String firstNonBlank(String first, String second) {
+        return isBlank(first) ? second : first;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String readText(JsonNode node) {
+        return node == null || node.isNull() ? null : node.asText();
+    }
+
+    private BigInteger readBigInteger(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return BigInteger.ZERO;
+        }
+        if (node.isNumber()) {
+            return node.bigIntegerValue();
+        }
+        String value = node.asText();
+        return isBlank(value) ? BigInteger.ZERO : new BigInteger(value);
     }
 
     private javax.ws.rs.core.Response torIndexAlgoria(List<String> modifiedSinces) {
