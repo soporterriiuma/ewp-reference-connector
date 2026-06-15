@@ -304,6 +304,11 @@ public class IncomingMobilityTorsResource {
 
         learner.setGivenNames(source.getGivenNames());
         learner.setFamilyName(source.getFamilyName());
+        if (!isBlank(source.getAlternativeName())) {
+            Elmo.Learner.AlternativeName alternativeName = new Elmo.Learner.AlternativeName();
+            alternativeName.setValue(source.getAlternativeName());
+            learner.setAlternativeName(alternativeName);
+        }
         if (!isBlank(source.getBirthDate())) {
             learner.setDateOfBirth(toXmlDate(source.getBirthDate()));
         }
