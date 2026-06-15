@@ -47,7 +47,7 @@ public class GlobalProperties {
     String defaultAlgoriaOmobilityUrl = baseUrl + "/ewp_omobilities/";
     String defaultAlgoriaImobilityLasNotifyUrl = baseUrl + "/ewp_imobilities_las/";
     String defaultAlgoriaImobilityNotifyUrl = baseUrl + "/ewp_imobilities/";
-    String defaultAlgoriaImobilityTorNotifyUrl = baseUrl + "/ewp_imobilities/tor/";
+    String defaultAlgoriaImobilityTorNotifyUrl = baseUrl + "/ewp_imobility_tors/";
     String defaultAlgoriaAuthorizationToken = "Token 19714bb5b0418965250b3c4ca1403acef8b1dd67";
     //String defaultAlgoriaAuthorizationToken = "Token ab1a997c0f38eddbfb64c24b9e0162d366832f29";
     //String defaultAlgoriaAuthorizationToken = "Token aa38ee014e1ce693c30b399aab9668ebc13f21fd";
