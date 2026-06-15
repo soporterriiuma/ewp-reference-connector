@@ -5,18 +5,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.erasmuswithoutpaper.api.architecture.Empty;
-import eu.erasmuswithoutpaper.api.imobilities.Imobilities;
 import eu.erasmuswithoutpaper.api.imobilities.endpoints.ImobilitiesGetResponse;
 import eu.erasmuswithoutpaper.api.imobilities.endpoints.StudentMobility;
 import eu.erasmuswithoutpaper.api.imobilities.tors.endpoints.ImobilityTorsGetResponse;
 import eu.erasmuswithoutpaper.api.imobilities.tors.endpoints.ImobilityTorsIndexResponse;
-import eu.erasmuswithoutpaper.api.omobilities.endpoints.OmobilitiesIndexResponse;
+import eu.erasmuswithoutpaper.api.imobilities.tors.stats.ImobilityTorStatsResponse;
 import eu.erasmuswithoutpaper.api.omobilities.las.endpoints.OmobilityLasIndexResponse;
-import eu.erasmuswithoutpaper.api.omobilities.stats.OmobilityStatsResponse;
 import eu.erasmuswithoutpaper.common.control.GlobalProperties;
 import eu.erasmuswithoutpaper.common.control.RegistryClient;
 import eu.erasmuswithoutpaper.error.control.EwpWebApplicationException;
-import eu.erasmuswithoutpaper.omobility.dto.AlgoriaOmobilityIndexDto;
+import eu.erasmuswithoutpaper.imobility.tor.dto.AlgoriaImobilityTorIndexDto;
 import eu.erasmuswithoutpaper.security.EwpAuthenticate;
 import eu.erasmuswithoutpaper.security.InternalAuthenticate;
 
@@ -185,7 +183,7 @@ public class IncomingMobilityTorsResource {
                 }
             }*/
 
-            OmobilityStatsResponse response = mapper.convertValue(root, OmobilityStatsResponse.class);
+            ImobilityTorStatsResponse response = mapper.convertValue(root, ImobilityTorStatsResponse.class);
             LOG.info("Algoria stats mapped response: " + mapper.writeValueAsString(response));
             return javax.ws.rs.core.Response.ok(response).build();
         } catch (EwpWebApplicationException e) {
@@ -325,15 +323,27 @@ public class IncomingMobilityTorsResource {
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                throw new EwpWebApplicationException("TOR index request failed. HTTP " + algoriaResponse.getStatus(),
+                        Response.Status.BAD_GATEWAY);
+            }
+
             ObjectMapper mapper = new ObjectMapper();
-            AlgoriaOmobilityIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityIndexDto.class);
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            AlgoriaImobilityTorIndexDto dto = mapper.readValue(rawBody, AlgoriaImobilityTorIndexDto.class);
 
             if (dto.getElements() != null) {
                 response.getOmobilityId().addAll(dto.getElements());
             }
+        } catch (EwpWebApplicationException e) {
+            LOG.warning("Algoria TOR index failed with known error: " + e.getMessage());
+            throw e;
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("TOR index request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
