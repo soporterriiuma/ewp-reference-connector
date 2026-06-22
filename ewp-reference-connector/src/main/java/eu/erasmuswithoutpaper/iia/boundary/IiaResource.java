@@ -233,6 +233,9 @@ public class IiaResource {
             target = target.queryParam("modified_since", modified_since);
         }
 
+        //log complete request before sending
+        LOG.fine("Algoria request URL: " + target.getUri().toString());
+
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
