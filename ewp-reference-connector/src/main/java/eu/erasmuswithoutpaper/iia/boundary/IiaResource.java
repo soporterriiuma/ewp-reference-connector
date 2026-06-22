@@ -226,11 +226,11 @@ public class IiaResource {
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
 
-        if(receiving_academic_year_id != null) {
+        if(receiving_academic_year_id != null && !receiving_academic_year_id.isEmpty()) {
             target = target.queryParam("receiving_academic_year_id", receiving_academic_year_id);
         }
-        if (modified_since != null) {
-            target = target.queryParam("modified_since", modified_since);
+        if (modified_since != null && !modified_since.isEmpty()) {
+            target = target.queryParam("modified_since", modified_since.get(0));
         }
 
         //log complete request before sending
