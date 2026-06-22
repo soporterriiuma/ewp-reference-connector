@@ -175,7 +175,7 @@ public class IiaResource {
     @GET
     @Path("algoria_index_test")
     @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
+    @InternalAuthenticate
     public javax.ws.rs.core.Response indexAlgoriaPost(@FormParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @FormParam("modified_since") List<String> modified_since, @QueryParam("hei_id") String heiId) {
         return iiaIndexAlgoria(receiving_academic_year_id, modified_since, heiId);
     }
