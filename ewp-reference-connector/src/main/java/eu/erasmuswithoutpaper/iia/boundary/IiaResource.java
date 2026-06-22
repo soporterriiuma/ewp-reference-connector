@@ -1,6 +1,7 @@
 package eu.erasmuswithoutpaper.iia.boundary;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -40,6 +41,7 @@ import eu.erasmuswithoutpaper.iia.common.IiaTaskEnum;
 import eu.erasmuswithoutpaper.iia.common.IiaTaskService;
 import eu.erasmuswithoutpaper.iia.control.IiaConverter;
 import eu.erasmuswithoutpaper.iia.control.IiasEJB;
+import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaGetDto;
 import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaIndexDto;
 import eu.erasmuswithoutpaper.iia.entity.CooperationCondition;
 import eu.erasmuswithoutpaper.iia.entity.Iia;
@@ -316,11 +318,27 @@ public class IiaResource {
     }
 
     @GET
-    @Path("get_algoria")
+    @Path("algoria_get")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response indexAlgoriaPost(@QueryParam("iia_id") List<String> iiaIdList) {
+    public javax.ws.rs.core.Response getGetAlgoria(@QueryParam("iia_id") List<String> iiaIdList) {
         return iiaGetAlgoria(iiaIdList);
+    }
+
+    @POST
+    @Path("algoria_get")
+    @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
+    public javax.ws.rs.core.Response getPostAlgoria(@FormParam("iia_id") List<String> iiaIdList) {
+        return iiaGetAlgoria(iiaIdList);
+    }
+
+    @GET
+    @Path("algoria_get_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response getAlgoria(@QueryParam("iia_id") List<String> iiaIdList, @QueryParam("hei_id") String heiId) {
+        return iiaGetAlgoria(iiaIdList, heiId);
     }
 
     private javax.ws.rs.core.Response iiaGetAlgoria(List<String> iiaIdList) {
@@ -336,6 +354,16 @@ public class IiaResource {
             throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
+        String heiId = heisCoveredByCertificate.iterator().next();
+
+        return iiaGetAlgoria(iiaIdList, heiId);
+    }
+
+    private javax.ws.rs.core.Response iiaGetAlgoria(List<String> iiaIdList, String heiId) {
+        if (iiaIdList == null) {
+            throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
+        }
+
         if (iiaIdList.size() > properties.getMaxIiaIds()) {
             throw new EwpWebApplicationException("Max number of IIA ids has exceeded.", Response.Status.BAD_REQUEST);
         }
@@ -344,26 +372,37 @@ public class IiaResource {
             throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
         }
 
-        String senderHeiId = heisCoveredByCertificate.iterator().next();
-
         IiasGetResponse response = new IiasGetResponse();
-        String url = properties.getAlgoriaIiaUrl(senderHeiId, iiaIdList.get(0));
+        String url = properties.getAlgoriaIiaUrl(heiId, iiaIdList.get(0));
         String token = properties.getAlgoriaAuthotizationToken();
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
 
+        LOG.fine("Algoria request URL: " + target.getUri().toString());
+
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
-            /*ObjectMapper mapper = new ObjectMapper();
-            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+                throw new EwpWebApplicationException("IIA get request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+            }
 
-            if (dto.getElements() != null) {
-                response.getOmobilityId().addAll(dto.getElements());
-            }*/
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            AlgoriaIiaGetDto dto = mapper.readValue(rawBody, AlgoriaIiaGetDto.class);
+
+            if (dto.getIia() != null) {
+                response.getIia().add(dto.getIia());
+            }
+        } catch (EwpWebApplicationException e) {
+            throw e;
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("IIA get request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
