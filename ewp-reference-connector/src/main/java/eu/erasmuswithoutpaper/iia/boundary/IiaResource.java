@@ -43,6 +43,7 @@ import eu.erasmuswithoutpaper.iia.control.IiaConverter;
 import eu.erasmuswithoutpaper.iia.control.IiasEJB;
 import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaGetDto;
 import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaIndexDto;
+import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaStatsDto;
 import eu.erasmuswithoutpaper.iia.entity.CooperationCondition;
 import eu.erasmuswithoutpaper.iia.entity.Iia;
 import eu.erasmuswithoutpaper.notification.entity.Notification;
@@ -663,9 +664,9 @@ public class IiaResource {
     }
 
     @GET
-    @Path("stats_algoria")
+    @Path("algoria_stats")
     @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
+    @InternalAuthenticate
     public javax.ws.rs.core.Response iiaStatsAlgoria() {
         Collection<String> heisCoveredByCertificate;
         if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
@@ -688,15 +689,26 @@ public class IiaResource {
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
-            /*ObjectMapper mapper = new ObjectMapper();
-            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
+            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
+                LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
+                throw new EwpWebApplicationException("IIA stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
+            }
 
-            if (dto.getElements() != null) {
-                response.getOmobilityId().addAll(dto.getElements());
-            }*/
+            ObjectMapper mapper = new ObjectMapper();
+            AlgoriaIiaStatsDto dto = mapper.readValue(rawBody, AlgoriaIiaStatsDto.class);
+
+            response.setIiaFetchable(dto.getIiaFetchable());
+            response.setIiaLocalUnapprovedPartnerApproved(dto.getIiaLocalUnapprovedPartnerApproved());
+            response.setIiaLocalApprovedPartnerUnapproved(dto.getIiaLocalApprovedPartnerUnapproved());
+            response.setIiaBothApproved(dto.getIiaBothApproved());
+        } catch (EwpWebApplicationException e) {
+            throw e;
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
+            throw new EwpWebApplicationException("IIA stats request failed", Response.Status.BAD_GATEWAY);
+        } finally {
+            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
