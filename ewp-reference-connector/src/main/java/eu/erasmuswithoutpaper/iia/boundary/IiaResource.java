@@ -666,7 +666,7 @@ public class IiaResource {
     @GET
     @Path("algoria_stats")
     @Produces(MediaType.APPLICATION_XML)
-    @InternalAuthenticate
+    @EwpAuthenticate
     public javax.ws.rs.core.Response iiaStatsAlgoria() {
         Collection<String> heisCoveredByCertificate;
         if (httpRequest.getAttribute("EwpRequestRSAPublicKey") != null) {
@@ -679,7 +679,18 @@ public class IiaResource {
             throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
+        return iiaStatsAlgoriaHelper();
+    }
 
+    @GET
+    @Path("algoria_stats_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response iiaStatsAlgoriaTest() {
+        return iiaStatsAlgoriaHelper();
+    }
+
+    private javax.ws.rs.core.Response iiaStatsAlgoriaHelper() {
         IiasStatsResponse response = new IiasStatsResponse();
         String url = properties.getAlgoriaIiaStatsUrl();
         String token = properties.getAlgoriaAuthotizationToken();
