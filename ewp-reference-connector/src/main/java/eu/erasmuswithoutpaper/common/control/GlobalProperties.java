@@ -32,7 +32,7 @@ public class GlobalProperties {
     String defaultUniversityName;
     String defaultAlgoriaToken = "675701176db0293a8cac23814481f8e50b320fbd";
 
-    String baseUrl = "https://relacionesi-test2.uma.es/algoria";
+    String baseUrl = "https://relacionesi.uma.es/algoria";
     
     String defaultAlgoriaApprovalURL = baseUrl + "/ewp_approved_agreement_notifications/";
     String defaultAlgoriaCreatedURL = baseUrl + "/ewp_created_agreement_notifications/";
