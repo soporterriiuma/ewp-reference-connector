@@ -291,19 +291,6 @@ public class GlobalProperties {
         return base + "stats/";
     }
 
-    public String getAlgoriaIiaIndexUrl(String heiId) {
-        String base = defaultAlgoriaIiasLasUrl;
-        try {
-            base = configEJB.getValue("algoria.iias.url", defaultAlgoriaIiasLasUrl);
-        } catch (Exception e) {
-            base = defaultAlgoriaIiasLasUrl;
-        }
-        if (!base.endsWith("/")) {
-            base = base + "/";
-        }
-        return base + heiId + "/index/";
-    }
-
     public String getAlgoriaIiasUrl(String heiId) {
         String base = defaultAlgoriaIiasLasUrl;
         try {

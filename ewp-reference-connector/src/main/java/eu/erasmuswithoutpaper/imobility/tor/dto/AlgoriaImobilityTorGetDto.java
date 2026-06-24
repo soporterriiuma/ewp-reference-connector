@@ -90,7 +90,6 @@ public class AlgoriaImobilityTorGetDto {
         private String globalId;
         private String givenNames;
         private String familyName;
-        private String alternativeName;
         private String birthDate;
 
         public String getGlobalId() {
@@ -115,14 +114,6 @@ public class AlgoriaImobilityTorGetDto {
 
         public void setFamilyName(String familyName) {
             this.familyName = familyName;
-        }
-
-        public String getAlternativeName() {
-            return alternativeName;
-        }
-
-        public void setAlternativeName(String alternativeName) {
-            this.alternativeName = alternativeName;
         }
 
         public String getBirthDate() {

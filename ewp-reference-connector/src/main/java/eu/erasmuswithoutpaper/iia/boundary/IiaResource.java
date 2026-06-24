@@ -1,7 +1,5 @@
 package eu.erasmuswithoutpaper.iia.boundary;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
@@ -41,9 +39,6 @@ import eu.erasmuswithoutpaper.iia.common.IiaTaskEnum;
 import eu.erasmuswithoutpaper.iia.common.IiaTaskService;
 import eu.erasmuswithoutpaper.iia.control.IiaConverter;
 import eu.erasmuswithoutpaper.iia.control.IiasEJB;
-import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaGetDto;
-import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaIndexDto;
-import eu.erasmuswithoutpaper.iia.dto.AlgoriaIiaStatsDto;
 import eu.erasmuswithoutpaper.iia.entity.CooperationCondition;
 import eu.erasmuswithoutpaper.iia.entity.Iia;
 import eu.erasmuswithoutpaper.notification.entity.Notification;
@@ -158,29 +153,12 @@ public class IiaResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }
 
-
     @GET
-    @Path("algoria_index")
+    @Path("index_algoria")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response indexGetAlgoria(@QueryParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @QueryParam("modified_since") List<String> modified_since) {
+    public javax.ws.rs.core.Response indexAlgoriaPost(@FormParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @FormParam("modified_since") List<String> modified_since) {
         return iiaIndexAlgoria(receiving_academic_year_id, modified_since);
-    }
-
-    @POST
-    @Path("algoria_index")
-    @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
-    public javax.ws.rs.core.Response indexPostAlgoria(@FormParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @FormParam("modified_since") List<String> modified_since) {
-        return iiaIndexAlgoria(receiving_academic_year_id, modified_since);
-    }
-
-    @GET
-    @Path("algoria_index_test")
-    @Produces(MediaType.APPLICATION_XML)
-    @InternalAuthenticate
-    public javax.ws.rs.core.Response indexAlgoriaPost(@FormParam("receiving_academic_year_id") List<String> receiving_academic_year_id, @FormParam("modified_since") List<String> modified_since, @QueryParam("hei_id") String heiId) {
-        return iiaIndexAlgoria(receiving_academic_year_id, modified_since, heiId);
     }
 
     private javax.ws.rs.core.Response iiaIndexAlgoria(List<String> receiving_academic_year_id, List<String> modified_since) {
@@ -196,12 +174,8 @@ public class IiaResource {
             throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
-        String heiId = heisCoveredByCertificate.iterator().next();
+        String senderHeiId = heisCoveredByCertificate.iterator().next();
 
-        return iiaIndexAlgoria(receiving_academic_year_id, modified_since, heiId);
-    }
-
-    private javax.ws.rs.core.Response iiaIndexAlgoria(List<String> receiving_academic_year_id, List<String> modified_since, String heiId) {
         if (modified_since != null && modified_since.size() > 1) {
             throw new EwpWebApplicationException("Not allow more than one value of modified_since", Response.Status.BAD_REQUEST);
         }
@@ -224,45 +198,30 @@ public class IiaResource {
         }
 
         IiasIndexResponse response = new IiasIndexResponse();
-        String url = properties.getAlgoriaIiaIndexUrl(heiId);
+        String url = properties.getAlgoriaIiasUrl(senderHeiId);
         String token = properties.getAlgoriaAuthotizationToken();
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
 
-        if(receiving_academic_year_id != null && !receiving_academic_year_id.isEmpty()) {
-            for (String yearId : receiving_academic_year_id) {
-                target = target.queryParam("receiving_academic_year_id", yearId);
-            }
+        if(receiving_academic_year_id != null) {
+            target = target.queryParam("receiving_academic_year", receiving_academic_year_id);
         }
-        if (modified_since != null && !modified_since.isEmpty()) {
-            target = target.queryParam("modified_since", modified_since.get(0));
+        if (modified_since != null) {
+            target = target.queryParam("student_id", modified_since);
         }
-
-        //log complete request before sending
-        LOG.fine("Algoria request URL: " + target.getUri().toString());
 
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
-            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
-                LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
-                throw new EwpWebApplicationException("IIA index request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
-            }
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
 
-            ObjectMapper mapper = new ObjectMapper();
-            AlgoriaIiaIndexDto dto = mapper.readValue(rawBody, AlgoriaIiaIndexDto.class);
-
-            if (dto.getIiaId() != null) {
-                response.getIiaId().addAll(dto.getIiaId());
-            }
-        } catch (EwpWebApplicationException e) {
-            throw e;
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
-            throw new EwpWebApplicationException("IIA index request failed", Response.Status.BAD_GATEWAY);
-        } finally {
-            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
@@ -319,27 +278,11 @@ public class IiaResource {
     }
 
     @GET
-    @Path("algoria_get")
+    @Path("get_algoria")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
-    public javax.ws.rs.core.Response getGetAlgoria(@QueryParam("iia_id") List<String> iiaIdList) {
+    public javax.ws.rs.core.Response indexAlgoriaPost(@QueryParam("iia_id") List<String> iiaIdList) {
         return iiaGetAlgoria(iiaIdList);
-    }
-
-    @POST
-    @Path("algoria_get")
-    @Produces(MediaType.APPLICATION_XML)
-    @EwpAuthenticate
-    public javax.ws.rs.core.Response getPostAlgoria(@FormParam("iia_id") List<String> iiaIdList) {
-        return iiaGetAlgoria(iiaIdList);
-    }
-
-    @GET
-    @Path("algoria_get_test")
-    @Produces(MediaType.APPLICATION_XML)
-    @InternalAuthenticate
-    public javax.ws.rs.core.Response getAlgoria(@QueryParam("iia_id") List<String> iiaIdList, @QueryParam("hei_id") String heiId) {
-        return iiaGetAlgoria(iiaIdList, heiId);
     }
 
     private javax.ws.rs.core.Response iiaGetAlgoria(List<String> iiaIdList) {
@@ -355,16 +298,6 @@ public class IiaResource {
             throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
-        String heiId = heisCoveredByCertificate.iterator().next();
-
-        return iiaGetAlgoria(iiaIdList, heiId);
-    }
-
-    private javax.ws.rs.core.Response iiaGetAlgoria(List<String> iiaIdList, String heiId) {
-        if (iiaIdList == null) {
-            throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
-        }
-
         if (iiaIdList.size() > properties.getMaxIiaIds()) {
             throw new EwpWebApplicationException("Max number of IIA ids has exceeded.", Response.Status.BAD_REQUEST);
         }
@@ -373,37 +306,26 @@ public class IiaResource {
             throw new EwpWebApplicationException("No iia_id provided", Response.Status.BAD_REQUEST);
         }
 
+        String senderHeiId = heisCoveredByCertificate.iterator().next();
+
         IiasGetResponse response = new IiasGetResponse();
-        String url = properties.getAlgoriaIiaUrl(heiId, iiaIdList.get(0));
+        String url = properties.getAlgoriaIiaUrl(senderHeiId, iiaIdList.get(0));
         String token = properties.getAlgoriaAuthotizationToken();
 
         WebTarget target = ClientBuilder.newBuilder().build().target(url.trim());
 
-        LOG.fine("Algoria request URL: " + target.getUri().toString());
-
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
-            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
-                LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
-                throw new EwpWebApplicationException("IIA get request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
-            }
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            AlgoriaIiaGetDto dto = mapper.readValue(rawBody, AlgoriaIiaGetDto.class);
-
-            if (dto.getIia() != null) {
-                response.getIia().add(dto.getIia());
-            }
-        } catch (EwpWebApplicationException e) {
-            throw e;
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
-            throw new EwpWebApplicationException("IIA get request failed", Response.Status.BAD_GATEWAY);
-        } finally {
-            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
@@ -664,7 +586,7 @@ public class IiaResource {
     }
 
     @GET
-    @Path("algoria_stats")
+    @Path("stats_algoria")
     @Produces(MediaType.APPLICATION_XML)
     @EwpAuthenticate
     public javax.ws.rs.core.Response iiaStatsAlgoria() {
@@ -679,18 +601,7 @@ public class IiaResource {
             throw new EwpWebApplicationException("No HEIs covered by this certificate.", Response.Status.FORBIDDEN);
         }
 
-        return iiaStatsAlgoriaHelper();
-    }
 
-    @GET
-    @Path("algoria_stats_test")
-    @Produces(MediaType.APPLICATION_XML)
-    @InternalAuthenticate
-    public javax.ws.rs.core.Response iiaStatsAlgoriaTest() {
-        return iiaStatsAlgoriaHelper();
-    }
-
-    private javax.ws.rs.core.Response iiaStatsAlgoriaHelper() {
         IiasStatsResponse response = new IiasStatsResponse();
         String url = properties.getAlgoriaIiaStatsUrl();
         String token = properties.getAlgoriaAuthotizationToken();
@@ -700,26 +611,15 @@ public class IiaResource {
         Response algoriaResponse = target.request().header("Authorization", token).get();
         String rawBody = algoriaResponse.readEntity(String.class);
         try {
-            if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
-                LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
-                throw new EwpWebApplicationException("IIA stats request failed. HTTP " + algoriaResponse.getStatus(), Response.Status.BAD_GATEWAY);
-            }
+            /*ObjectMapper mapper = new ObjectMapper();
+            AlgoriaOmobilityLasIndexDto dto = mapper.readValue(rawBody, AlgoriaOmobilityLasIndexDto.class);
 
-            ObjectMapper mapper = new ObjectMapper();
-            AlgoriaIiaStatsDto dto = mapper.readValue(rawBody, AlgoriaIiaStatsDto.class);
-
-            response.setIiaFetchable(dto.getIiaFetchable());
-            response.setIiaLocalUnapprovedPartnerApproved(dto.getIiaLocalUnapprovedPartnerApproved());
-            response.setIiaLocalApprovedPartnerUnapproved(dto.getIiaLocalApprovedPartnerUnapproved());
-            response.setIiaBothApproved(dto.getIiaBothApproved());
-        } catch (EwpWebApplicationException e) {
-            throw e;
+            if (dto.getElements() != null) {
+                response.getOmobilityId().addAll(dto.getElements());
+            }*/
         } catch (Exception e) {
             LOG.warning("Algoria response (" + algoriaResponse.getStatus() + ") raw:\n" + rawBody);
             LOG.warning("Algoria response parse error: " + e.getMessage());
-            throw new EwpWebApplicationException("IIA stats request failed", Response.Status.BAD_GATEWAY);
-        } finally {
-            algoriaResponse.close();
         }
 
         return javax.ws.rs.core.Response.ok(response).build();
