@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @Stateless
-@Path("imobility")
+@Path("imobility/tors")
 public class GuiIncomingMobilityTorsResource {
     @Inject
     RegistryClient registryClient;

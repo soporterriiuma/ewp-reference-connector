@@ -22,6 +22,7 @@ import org.w3c.dom.NodeList;
 @Singleton
 public class RegistryClient {
     private static final Logger logger = LoggerFactory.getLogger(RegistryClient.class);
+    private static final long REGISTRY_MIN_TIME_BETWEEN_QUERIES_MS = 60 * 60 * 1000L;
     private eu.erasmuswithoutpaper.registryclient.RegistryClient client;
 
     @Inject
@@ -33,6 +34,7 @@ public class RegistryClient {
             ClientImplOptions options = new ClientImplOptions();
             options.setCatalogueFetcher(new DefaultCatalogueFetcher(properties.getRegistryUrl()));
             options.setAutoRefreshing(properties.isRegistryAutoRefreshing());
+            options.setMinTimeBetweenQueries(REGISTRY_MIN_TIME_BETWEEN_QUERIES_MS);
             options.setTimeBetweenRetries(properties.getRegistryTimeBetweenRetries());
             client = new ClientImpl(options);
 
