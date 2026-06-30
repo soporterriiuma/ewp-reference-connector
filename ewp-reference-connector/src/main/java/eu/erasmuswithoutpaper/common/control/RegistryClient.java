@@ -240,11 +240,11 @@ public class RegistryClient {
     public Map<String, String> getImobilityTorsHeiUrlsV23(String heiId) {
         Map<String, String> v3 = getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", EwpConstants.INCOMING_MOBILITIES_TORS_CLIENT_VERSION);
         if(v3 == null || v3.isEmpty() ) {
-            return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", "2.0.0");
+            return getHeiUrls(heiId, "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v2/manifest-entry.xsd", "imobility-tors", "2.0.0");
         }
         String heiUrl = v3.get("index-url");
         if (heiUrl == null || heiUrl.isEmpty()) {
-            return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", "2.0.0");
+            return getHeiUrls(heiId, "https://github.com/erasmus-without-paper/ewp-specs-api-imobility-tors/blob/stable-v2/manifest-entry.xsd", "imobility-tors", "2.0.0");
         }
         return v3;
     }
