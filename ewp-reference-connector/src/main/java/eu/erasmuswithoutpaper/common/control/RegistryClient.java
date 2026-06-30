@@ -237,6 +237,18 @@ public class RegistryClient {
         return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", EwpConstants.INCOMING_MOBILITIES_TORS_CLIENT_VERSION);
     }
 
+    public Map<String, String> getImobilityTorsHeiUrlsV23(String heiId) {
+        Map<String, String> v3 = getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", EwpConstants.INCOMING_MOBILITIES_TORS_CLIENT_VERSION);
+        if(v3 == null || v3.isEmpty() ) {
+            return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", "2.0.0");
+        }
+        String heiUrl = v3.get("index-url");
+        if (heiUrl == null || heiUrl.isEmpty()) {
+            return getHeiUrls(heiId, EwpConstants.INCOMING_MOBILITIES_TORS_NAMESPACE, "imobility-tors", "2.0.0");
+        }
+        return v3;
+    }
+
     public List<HeiEntry> getImobilityTorsCnrHeisWithUrls() {
         List<HeiEntry> heis = getHeis(EwpConstants.INCOMING_MOBILITIES_TORS_CNR_NAMESPACE, "imobility-tor-cnr", EwpConstants.INCOMING_MOBILITY_TORS_CNR_CLIENT_VERSION);
         heis.stream().forEach(hei -> hei.setUrls(getImobilityTorsCnrHeiUrls(hei.getId())));

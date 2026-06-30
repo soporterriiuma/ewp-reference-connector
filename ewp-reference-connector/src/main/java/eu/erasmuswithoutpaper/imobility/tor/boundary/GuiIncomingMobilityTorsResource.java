@@ -45,7 +45,7 @@ public class GuiIncomingMobilityTorsResource {
     public Response index(@QueryParam("hei_id") String heiId, @QueryParam("modified_since") String modifiedSince, @QueryParam("type") String type) {
         LOG.fine("index: Hei searched: " + heiId);
 
-        Map<String, String> heiUrls = registryClient.getImobilityTorsHeiUrls(heiId);
+        Map<String, String> heiUrls = registryClient.getImobilityTorsHeiUrlsV23(heiId);
         if (heiUrls == null || heiUrls.isEmpty()) {
             LOG.fine("index: Hei not found: " + heiId);
             return javax.ws.rs.core.Response.status(Response.Status.NOT_FOUND).build();
@@ -107,7 +107,7 @@ public class GuiIncomingMobilityTorsResource {
     public Response get(@QueryParam("hei_id") String heiId, @QueryParam("omobility_id") String omobilityId, @QueryParam("type") String type) {
         LOG.fine("get: Hei searched: " + heiId);
 
-        Map<String, String> heiUrls = registryClient.getImobilityTorsHeiUrls(heiId);
+        Map<String, String> heiUrls = registryClient.getImobilityTorsHeiUrlsV23(heiId);
         if (heiUrls == null || heiUrls.isEmpty()) {
             LOG.fine("get: Hei not found: " + heiId);
             return Response.status(Response.Status.NOT_FOUND).build();
