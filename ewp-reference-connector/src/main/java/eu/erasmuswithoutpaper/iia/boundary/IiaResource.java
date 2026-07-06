@@ -625,6 +625,15 @@ public class IiaResource {
         return iiaStats();
     }
 
+    @GET
+    @Path("stats_test")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public javax.ws.rs.core.Response iiaGetStatsTest() {
+        LOG.fine("------------------------------ START /iias/stats ------------------------------");
+        return iiaStats();
+    }
+
     private javax.ws.rs.core.Response iiaStats() {
 
         IiasStatsResponse response = new IiasStatsResponse();
