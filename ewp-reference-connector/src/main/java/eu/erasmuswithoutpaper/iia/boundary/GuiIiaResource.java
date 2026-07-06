@@ -783,6 +783,7 @@ public class GuiIiaResource {
         return javax.ws.rs.core.Response.ok(response).build();
     }
 
+
     private List<ClientResponse> notifyPartner(Iia iia) {
         LOG.fine("NOTIFY: Send notification");
 
@@ -1405,6 +1406,57 @@ public class GuiIiaResource {
         return javax.ws.rs.core.Response.ok(approval).build();
     }
 
+    @GET
+    @Path("get-approval-own")
+    @InternalAuthenticate
+    @Produces(MediaType.APPLICATION_JSON)
+    public javax.ws.rs.core.Response getApprovalOwn(@QueryParam("iia_id") String iiaId) {
+        if (iiaId == null || iiaId.isEmpty()) {
+            return javax.ws.rs.core.Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        String localHeiId = iiasEJB.getHeiId();
+        String partnerHeiId = "";
+        String partnerIiaId = "";
+        Iia iia = iiasEJB.findById(iiaId);
+        if (iia == null) {
+            return javax.ws.rs.core.Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        for (CooperationCondition c : iia.getCooperationConditions()) {
+            LOG.fine("GuiIiaRecource: Sending Partner: " + c.getSendingPartner().getInstitutionId());
+            LOG.fine("GuiIiaRecource: Receiving Partner: " + c.getReceivingPartner().getInstitutionId());
+            if (c.getSendingPartner().getInstitutionId().equals(localHeiId)) {
+                partnerHeiId = c.getReceivingPartner().getInstitutionId();
+                partnerIiaId = c.getReceivingPartner().getIiaId();
+            } else if (c.getReceivingPartner().getInstitutionId().equals(localHeiId)) {
+                partnerHeiId = c.getSendingPartner().getInstitutionId();
+                partnerIiaId = c.getSendingPartner().getIiaId();
+            }
+        }
+
+        IiasApprovalResponse response = new IiasApprovalResponse();
+        IiasApprovalResponse.Approval approval = new IiasApprovalResponse.Approval();
+        approval.setIiaId(iiaId);
+        approval.setIiaHash(iia.getHashPartner());
+
+        List<IiaApproval> iiaApprovals = iiasEJB.findIiaApproval(iiasEJB.getHeiId(), iia.getId());
+        if (!iiaApprovals.isEmpty()) {
+            LOG.fine("iiaApprovals: " + iiaApprovals.size());
+            response.getApproval().add(approval);
+        } else {
+            Iia approvedIia = iiasEJB.findApprovedVersion(iia.getId());
+            if (approvedIia != null) {
+                approval = new IiasApprovalResponse.Approval();
+                approval.setIiaId(iiaId);
+                approval.setIiaHash(approvedIia.getHashPartner());
+
+                response.getApproval().add(approval);
+            }
+        }
+
+
+        return javax.ws.rs.core.Response.ok(approval).build();
+    }
+
     @POST
     @Path("sendAlgoria")
     @InternalAuthenticate
@@ -1946,7 +1998,7 @@ public class GuiIiaResource {
             return javax.ws.rs.core.Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        if (!Boolean.TRUE.equals(force)  && iiasEJB.findApprovedVersion(iiaId) != null) {
+        if (!Boolean.TRUE.equals(force) && iiasEJB.findApprovedVersion(iiaId) != null) {
             return javax.ws.rs.core.Response.status(Response.Status.BAD_REQUEST).entity("The IIA is approved").build();
         }
 
