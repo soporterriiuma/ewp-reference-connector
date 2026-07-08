@@ -32,7 +32,7 @@ public class GlobalProperties {
     String defaultUniversityName;
     String defaultAlgoriaToken = "675701176db0293a8cac23814481f8e50b320fbd";
 
-    String baseUrl = "https://relacionesi.uma.es/algoria";
+    String baseUrl = "https://relacionesi-test2.uma.es/algoria";
     
     String defaultAlgoriaApprovalURL = baseUrl + "/ewp_approved_agreement_notifications/";
     String defaultAlgoriaCreatedURL = baseUrl + "/ewp_created_agreement_notifications/";
@@ -48,6 +48,7 @@ public class GlobalProperties {
     String defaultAlgoriaImobilityLasNotifyUrl = baseUrl + "/ewp_imobilities_las/";
     String defaultAlgoriaImobilityNotifyUrl = baseUrl + "/ewp_imobilities/";
     String defaultAlgoriaImobilityTorNotifyUrl = baseUrl + "/ewp_imobility_tors/";
+    String defaultAlgoriaImobilityTorCnrUrl = baseUrl + "/ewp_partner_tors/";
     String defaultAlgoriaAuthorizationToken = "Token 19714bb5b0418965250b3c4ca1403acef8b1dd67";
     //String defaultAlgoriaAuthorizationToken = "Token ab1a997c0f38eddbfb64c24b9e0162d366832f29";
     //String defaultAlgoriaAuthorizationToken = "Token aa38ee014e1ce693c30b399aab9668ebc13f21fd";
@@ -450,12 +451,12 @@ public class GlobalProperties {
         return base + heiId + "/" + mobilityId + "/";
     }
 
-    public String getAlgoriaImobilityTorNotifyUrl(String heiId, String imobilityId) {
-        String base = getProperty("algoria.omobility.notify.url", defaultAlgoriaImobilityTorNotifyUrl);
+    public String getAlgoriaImobilityTorNotifyUrl(String heiId) {
+        String base = getProperty("algoria.imobility.tor.notify.url", defaultAlgoriaImobilityTorCnrUrl);
         if (!base.endsWith("/")) {
             base = base + "/";
         }
-        return base + heiId + "/" + imobilityId + "/notify/";
+        return base + heiId + "/" + "/notify/";
     }
 
     public String getAlgoriaImobilityTorStatsUrl() {

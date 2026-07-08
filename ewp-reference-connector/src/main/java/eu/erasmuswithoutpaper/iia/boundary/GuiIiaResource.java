@@ -1414,23 +1414,9 @@ public class GuiIiaResource {
         if (iiaId == null || iiaId.isEmpty()) {
             return javax.ws.rs.core.Response.status(Response.Status.BAD_REQUEST).build();
         }
-        String localHeiId = iiasEJB.getHeiId();
-        String partnerHeiId = "";
-        String partnerIiaId = "";
         Iia iia = iiasEJB.findById(iiaId);
         if (iia == null) {
             return javax.ws.rs.core.Response.status(Response.Status.BAD_REQUEST).build();
-        }
-        for (CooperationCondition c : iia.getCooperationConditions()) {
-            LOG.fine("GuiIiaRecource: Sending Partner: " + c.getSendingPartner().getInstitutionId());
-            LOG.fine("GuiIiaRecource: Receiving Partner: " + c.getReceivingPartner().getInstitutionId());
-            if (c.getSendingPartner().getInstitutionId().equals(localHeiId)) {
-                partnerHeiId = c.getReceivingPartner().getInstitutionId();
-                partnerIiaId = c.getReceivingPartner().getIiaId();
-            } else if (c.getReceivingPartner().getInstitutionId().equals(localHeiId)) {
-                partnerHeiId = c.getSendingPartner().getInstitutionId();
-                partnerIiaId = c.getSendingPartner().getIiaId();
-            }
         }
 
         IiasApprovalResponse response = new IiasApprovalResponse();

@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -111,6 +112,7 @@ public class IncomingMobilityTorsResource {
     @POST
     @Path("cnr")
     @Produces(MediaType.APPLICATION_XML)
+    @EwpAuthenticate
     public Response cnrPost(@FormParam("omobility_id") List<String> omobilityIds) {
 
         if (omobilityIds.size() > properties.getMaxMobilityIds()) {
@@ -130,6 +132,18 @@ public class IncomingMobilityTorsResource {
 
         String heiId = heisCoveredByCertificate.iterator().next();
 
+        return processCnrRequest(heiId, omobilityIds);
+    }
+
+    @POST
+    @Path("cnr")
+    @Produces(MediaType.APPLICATION_XML)
+    @InternalAuthenticate
+    public Response cnrPostTest(@FormParam("omobility_id") List<String> omobilityIds, @FormParam("hei_id") String heiId) {
+        return  processCnrRequest(heiId, omobilityIds);
+    }
+
+    private Response processCnrRequest(String heiId, List<String> omobilityIds) {
         CompletableFuture.runAsync(() -> {
             for (String omobilityId : omobilityIds) {
                 try {
@@ -580,14 +594,16 @@ public class IncomingMobilityTorsResource {
 
     private void notifyAlgoriaImobility(String sendingHeiId, String omobilityId) {
         String token = properties.getAlgoriaAuthotizationToken();
-        String url = properties.getAlgoriaImobilityTorNotifyUrl(sendingHeiId, omobilityId);
+        String url = properties.getAlgoriaImobilityTorNotifyUrl(sendingHeiId);
+        ObjectNode body = new ObjectMapper().createObjectNode();
+        body.put("omobility_id", omobilityId);
         try {
             Response algoriaResponse = ClientBuilder.newBuilder()
                     .build()
                     .target(url.trim())
                     .request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", token)
-                    .method("POST");
+                    .post(Entity.entity(body.toString(), MediaType.APPLICATION_JSON_TYPE));
             try {
                 String rawBody = algoriaResponse.readEntity(String.class);
                 if (algoriaResponse.getStatus() < 200 || algoriaResponse.getStatus() >= 300) {
