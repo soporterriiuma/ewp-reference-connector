@@ -136,7 +136,7 @@ public class IncomingMobilityTorsResource {
     }
 
     @POST
-    @Path("cnr")
+    @Path("cnr_test")
     @Produces(MediaType.APPLICATION_XML)
     @InternalAuthenticate
     public Response cnrPostTest(@FormParam("omobility_id") List<String> omobilityIds, @FormParam("hei_id") String heiId) {
